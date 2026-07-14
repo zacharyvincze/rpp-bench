@@ -10,6 +10,8 @@
   },
   "ops": [
     { "name": "brightness", "params": { "alpha": 1.75, "beta": 50 } },
+    { "name": "gamma_correction", "params": { "gamma": 0.5 } },
+    { "name": "contrast", "params": { "factor": 2.96, "center": 128 } },
     { "name": "gaussian_blur", "params": { "kernel_size": 3, "std_dev": 1.0 } },
     { "name": "resize", "dst_sizes": [[112, 112]], "params": { "interpolation": "BILINEAR" } }
   ]
