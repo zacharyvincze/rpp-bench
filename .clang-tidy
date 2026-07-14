@@ -1,0 +1,75 @@
+# clang-tidy configuration for rpp-mark.
+#
+# Pairs with .clang-format (run tidy's fixes through it via FormatStyle: file).
+# The enabled check groups catch real bugs and portability/perf issues; the
+# disabled ones below are switched off specifically because they would fight
+# conventions already used throughout common/ and src/ (see the notes).
+---
+Checks: >
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  portability-*,
+  modernize-*,
+  readability-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-reserved-identifier,
+  -bugprone-throwing-static-initialization,
+  -modernize-use-trailing-return-type,
+  -modernize-use-nodiscard,
+  -readability-braces-around-statements,
+  -readability-named-parameter,
+  -readability-implicit-bool-conversion,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-function-cognitive-complexity
+
+# Notes on the disabled checks:
+#   easily-swappable-parameters   - width/height and dstWidth/dstHeight pairs are
+#                                    intentional; flagging every pair is pure noise.
+#   reserved-identifier           - the REGISTER_RPP_BENCH macro expands to a
+#                                    _rpp_bench_reg_* registrar; the leading
+#                                    underscore is deliberate and scoped.
+#   throwing-static-initialization - the same REGISTER_RPP_BENCH registrar runs at
+#                                    static-init time; self-registration is the
+#                                    intended pattern and its throw is unavoidable.
+#   use-trailing-return-type      - the codebase uses classic leading return types.
+#   use-nodiscard                 - too opinionated for the rppt_*-style returns.
+#   braces-around-statements      - the sources use brace-less single-line ifs
+#                                    (e.g. `if (s == "U8") return ...;`).
+#   named-parameter               - unused params are intentionally left unnamed
+#                                    (e.g. srcOffsetBytes(const BenchContext &)).
+#   implicit-bool-conversion      - pointer/int truthiness tests are idiomatic here.
+#   identifier-length             - short names (l, s, t, ctx) are used on purpose.
+#   magic-numbers                 - benchmark sizes/channels are literals by nature.
+#   function-cognitive-complexity - the switch-heavy enum helpers trip it harmlessly.
+
+# Only lint this project's own headers, never the fetched deps or ROCm headers.
+# The leading slash matters: a bare 'src/' would also match '..._deps/foo-src/'.
+HeaderFilterRegex: '/(common|src)/'
+
+# Don't fail the build on findings by default; surface them as warnings.
+WarningsAsErrors: ''
+
+# Apply fix-its using the project .clang-format style.
+FormatStyle: file
+
+CheckOptions:
+  # Types.
+  readability-identifier-naming.NamespaceCase:            lower_case
+  readability-identifier-naming.ClassCase:                CamelCase
+  readability-identifier-naming.StructCase:               CamelCase
+  readability-identifier-naming.EnumCase:                 CamelCase
+  readability-identifier-naming.EnumConstantCase:         UPPER_CASE
+  readability-identifier-naming.ScopedEnumConstantCase:   UPPER_CASE
+  readability-identifier-naming.TypeAliasCase:            CamelCase
+  readability-identifier-naming.TypedefCase:              CamelCase
+  readability-identifier-naming.TemplateParameterCase:    CamelCase
+  # Functions: free functions are snake_case, member functions are camelBack.
+  readability-identifier-naming.FunctionCase:             lower_case
+  readability-identifier-naming.MethodCase:               camelBack
+  # Members: camelBack, with a trailing underscore on privates.
+  readability-identifier-naming.MemberCase:               camelBack
+  readability-identifier-naming.PrivateMemberSuffix:      _
+  # Macros (REGISTER_RPP_BENCH, include guards).
+  readability-identifier-naming.MacroDefinitionCase:      UPPER_CASE

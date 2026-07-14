@@ -1,0 +1,16 @@
+{
+  "//": "Tiny CI-friendly sweep - one quick combo per op.",
+  "min_time_sec": 0.05,
+  "defaults": {
+    "backends": ["HOST"],
+    "dtypes": ["U8"],
+    "layouts": ["PKD3"],
+    "batch_sizes": [1],
+    "image_sizes": [[224, 224]]
+  },
+  "ops": [
+    { "name": "brightness", "params": { "alpha": 1.75, "beta": 50 } },
+    { "name": "gaussian_blur", "params": { "kernel_size": 3, "std_dev": 1.0 } },
+    { "name": "resize", "dst_sizes": [[112, 112]], "params": { "interpolation": "BILINEAR" } }
+  ]
+}

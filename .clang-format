@@ -1,0 +1,31 @@
+# Style for rpp-mark. Tuned to match the existing sources in common/ and src/:
+# 4-space indent, attached braces, right-aligned pointers, ~100 col.
+---
+Language:        Cpp
+BasedOnStyle:    LLVM
+
+IndentWidth:     4
+TabWidth:        4
+UseTab:          Never
+ColumnLimit:     100
+
+BreakBeforeBraces:            Attach
+PointerAlignment:            Right
+DerivePointerAlignment:      false
+
+AccessModifierOffset:        -4
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakTemplateDeclarations: Yes
+SpaceAfterTemplateKeyword:   true
+
+# Keep related includes grouped but don't reorder across blank-line groups,
+# so the rpp/nlohmann/local/std ordering used in the sources is preserved.
+SortIncludes:                false
+IncludeBlocks:               Preserve
+
+AlignAfterOpenBracket:       Align
+BinPackArguments:            true
+BinPackParameters:           true
+ReflowComments:              true
