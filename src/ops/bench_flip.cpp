@@ -3,18 +3,6 @@
 // Signature:
 //   rppt_flip(src, srcDesc, dst, dstDesc, horizontalTensor, verticalTensor,
 //             roi, roiType, handle, backend)
-//
-// NOTE (HIP): the vertical-mirror boundary of the HIP kernel is buggy for the
-// horizontal+vertical case. The kernel launches over the *padded* destination
-// width (real width rounded up to a multiple of 8, +8) and guards threads with
-// `id_x >= dstDescPtr->w` (the padded width), so a boundary thread at
-// id_x == real-width still runs. In the h+v branch that thread computes
-// srcIdx += (rb.x - id_x - 7) * channels, which is negative; srcIdx is unsigned,
-// so it wraps to ~4e9 and the load lands ~4 GB past the buffer -> illegal access.
-// (The horizontal-only branch special-cases this thread; vertical-only never uses
-// rb.x - id_x, so both of those are safe.) RPP's own HIP test suite only ever
-// exercises horizontal=1, vertical=0, so this path is never covered upstream.
-// We therefore default this benchmark to the supported horizontal flip.
 #include "bench_registry.hpp"
 #include <rpp/rppt_tensor_geometric_augmentations.h>
 

@@ -1,6 +1,4 @@
 {
-  "//": "Fuller example sweep. Edit freely - no rebuild needed to change the matrix.",
-  "//backends": "Add \"HIP\" when rpp_bench is built against a HIP install of RPP.",
   "min_time_sec": 0.01,
   "repetitions": 1,
 
@@ -13,26 +11,11 @@
   },
 
   "ops": [
-    {
-      "name": "brightness",
-      "params": { "alpha": 1.75, "beta": 50 }
-    },
-    {
-      "name": "gaussian_blur",
-      "//": "kernel_size must be odd (3/5/7/9).",
-      "params": { "kernel_size": 5, "std_dev": 1.5 }
-    },
-    {
-      "name": "flip",
-      "//": "horizontal/vertical are 0/1 flags. NOTE: the HIP kernel's h+v mirror",
-      "//hv": "boundary underflows (unsigned srcIdx) -> illegal access; RPP QA only",
-      "//qa": "covers horizontal-only, so we benchmark that supported path.",
-      "params": { "horizontal": 1, "vertical": 0 }
-    },
+    { "name": "brightness", "params": { "alpha": 1.75, "beta": 50 } },
+    { "name": "gaussian_blur", "params": { "kernel_size": 5, "std_dev": 1.5 } },
+    { "name": "flip", "params": { "horizontal": 1, "vertical": 0 } },
     {
       "name": "resize",
-      "//": "resize sweeps destination sizes AND a set of param variants.",
-      "//param_sets": "each entry is a separate case; here, three interpolations.",
       "dtypes": ["U8", "F32"],
       "dst_sizes": [[112, 112], [960, 540], [1920, 1080]],
       "param_sets": [
