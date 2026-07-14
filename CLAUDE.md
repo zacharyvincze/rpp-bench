@@ -38,23 +38,36 @@ python3 scripts/plot_results.py results.json -o results.png # needs matplotlib +
 
 Flow: `bench_main.cpp` loads a `BenchConfig` → `register_benchmarks()` expands the matrix and registers one Google Benchmark per combo → Google Benchmark runs them → `release_active_resources()` frees the last case.
 
-- **`common/bench_config.*`** — parses the JSON into `BenchConfig` (global `min_time_sec` / `repetitions`, a list of `OpSpec`). Each op inherits `defaults` and may override any matrix axis. `params` (one set) and `param_sets` (a swept list) are mutually exclusive and both normalize into `OpSpec::paramSets` (always ≥1 entry).
-- **`common/bench_runner.cpp`** — the cartesian expansion (nested loops over backend/dtype/layout/batch/size/dst/paramSet), skipping combos an adapter doesn't support or a backend not compiled in. Also owns `run_case()` (the timed body) and the benchmark-name encoding.
-- **`common/bench_registry.hpp`** — the `OpAdapter` interface, the `BenchContext` (one fully-resolved sweep point), and the global `OpRegistry` singleton.
-- **`common/bench_tensor.*`** — `TensorBuffer`: descriptor/stride/ROI setup and HIP-aware allocation, so adapters get ready-to-use src/dst and only build their own param tensors. HIP inputs are filled directly in device memory via rocRAND (no H2D copy).
-- **`common/bench_enums.hpp`** — the single source of truth for string↔RPP-enum mapping (dtype, layout, backend, interpolation). Config parsing, name encoding, and adapters all go through it.
-- **`src/ops/bench_<name>.cpp`** — one adapter per op.
+The harness lives in `common/`, grouped by role into three subdirectories. Headers are included **path-qualified from the `common/` root** (e.g. `#include "harness/bench_registry.hpp"`), and `common/` is the only include directory.
+
+`common/config/`
+- **`bench_config.*`** — parses the JSON into `BenchConfig` (global `min_time_sec` / `repetitions`, a list of `OpSpec`). Each op inherits `defaults` and may override any matrix axis. `params` (one set) and `param_sets` (a swept list) are mutually exclusive and both normalize into `OpSpec::paramSets` (always ≥1 entry).
+- **`bench_enums.hpp`** — the single source of truth for string↔RPP-enum mapping (dtype, layout, backend, interpolation). Config parsing, name encoding, and adapters all go through it.
+
+`common/harness/`
+- **`bench_registry.hpp`** — the `OpAdapter` interface, the `BenchContext` (one fully-resolved sweep point), and the global `OpRegistry` singleton.
+- **`bench_tensor.*`** — `TensorBuffer`: descriptor/stride/ROI setup and HIP-aware allocation, so adapters get ready-to-use src/dst and only build their own param tensors. HIP inputs are filled directly in device memory via rocRAND (no H2D copy).
+- **`bench_runner.cpp`** — the cartesian expansion (nested loops over backend/dtype/layout/batch/size/dst/paramSet), skipping combos an adapter doesn't support or a backend not compiled in. Also owns `run_case()` (the timed body).
+- **`bench_name.*`** — `encode_name()`, the benchmark-name encoding (its own file because it's a contract with `scripts/json2csv.py`).
+
+`common/cli/`
+- **`bench_cli.*`** — argument munging (`--config`, `--list-ops`, `--progress`) pulled out of argv before Google Benchmark's parser sees it, plus the `--help` text.
+- **`bench_progress.*`** — the `--progress` display: `ProgressReporter` (a Google Benchmark reporter) and `count_matching()` (so the progress denominator respects `--benchmark_filter`).
+
+`src/`
+- **`bench_main.cpp`** — the entry point; just wires the above together.
+- **`ops/bench_<name>.cpp`** — one adapter per op.
 
 ### Two things that are easy to get wrong
 
-- **Case-resource reuse (`CaseResources g_case` in bench_runner.cpp).** Google Benchmark re-invokes a case's function multiple times (calibration ramp + each repetition). Expensive per-case state (rppCreate handle, HIP stream, src/dst buffers, the adapter) is built **once**, keyed by `caseId`, and reused; a new case releases the previous one. So at most one case's GPU memory is resident, and this assumes single-threaded, sequential benchmarks. That's why `release_active_resources()` must be called after `RunSpecifiedBenchmarks()`.
-- **The benchmark name is a contract.** `encode_name()` in bench_runner.cpp produces `op:.../backend:.../dtype:.../layout:.../batch:.../size:WxH[/dst:WxH][/params:k=v,...]`, and `scripts/json2csv.py` splits it back into columns. Keep the two in sync — changing the format silently breaks CSV conversion. Params are sorted and comma-joined for deterministic, uniquely-named swept cases.
+- **Case-resource reuse (`CaseResources g_case` in harness/bench_runner.cpp).** Google Benchmark re-invokes a case's function multiple times (calibration ramp + each repetition). Expensive per-case state (rppCreate handle, HIP stream, src/dst buffers, the adapter) is built **once**, keyed by `caseId`, and reused; a new case releases the previous one. So at most one case's GPU memory is resident, and this assumes single-threaded, sequential benchmarks. That's why `release_active_resources()` must be called after `RunSpecifiedBenchmarks()`.
+- **The benchmark name is a contract.** `encode_name()` in harness/bench_name.cpp produces `op:.../backend:.../dtype:.../layout:.../batch:.../size:WxH[/dst:WxH][/params:k=v,...]`, and `scripts/json2csv.py` splits it back into columns. Keep the two in sync — changing the format silently breaks CSV conversion. Params are sorted and comma-joined for deterministic, uniquely-named swept cases.
 
 ## Adding an op
 
 Each `rppt_*` function has a distinct C signature, so each op needs a small adapter under `src/ops/bench_<name>.cpp`:
 
-1. Subclass `OpAdapter` (see `common/bench_registry.hpp`).
+1. Subclass `OpAdapter` (see `common/harness/bench_registry.hpp`).
 2. In `setup()` allocate op-specific param tensors with `bench_pinned_alloc` (so they work on HIP); issue the `rppt_*` call in `run()`; free in `teardown()`. Read config params via `ctx.param<T>("key", fallback)`.
 3. Optionally override `supportedDtypes()` / `supportedLayouts()` to constrain the sweep, and `srcOffsetBytes()` / `srcAdditionalStride()` for filter ops that need halo padding on the source buffer.
 4. `REGISTER_RPP_BENCH("config_name", AdapterClass)` at file scope.

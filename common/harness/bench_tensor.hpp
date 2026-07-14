@@ -10,7 +10,7 @@
 #define RPP_BENCH_TENSOR_HPP
 
 #include <rpp/rppdefs.h>
-#include "bench_enums.hpp"
+#include "config/bench_enums.hpp"
 #include <cstddef>
 
 namespace rppbench {

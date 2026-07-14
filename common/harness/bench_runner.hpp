@@ -4,7 +4,7 @@
 #ifndef RPP_BENCH_RUNNER_HPP
 #define RPP_BENCH_RUNNER_HPP
 
-#include "bench_config.hpp"
+#include "config/bench_config.hpp"
 
 #include <string>
 #include <vector>

@@ -1,4 +1,4 @@
-#include "bench_registry.hpp"
+#include "harness/bench_registry.hpp"
 
 #include <algorithm>
 #include <stdexcept>

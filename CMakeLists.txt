@@ -69,13 +69,18 @@ FetchContent_MakeAvailable(benchmark nlohmann_json)
 # ----------------------------------------------------------------------------
 # Benchmark executable.
 #
-# The harness lives in common/ (config parsing, tensor setup, registry, runner)
-# and each op adapter is one .cpp under src/ops/. The glob keeps op registration
+# The harness lives in common/, grouped by role into subdirectories:
+#   common/config/  - config parsing + string<->enum mapping
+#   common/harness/ - tensor setup, op registry, name encoding, the runner
+#   common/cli/     - argument handling and the --progress reporter
+# Each op adapter is one .cpp under src/ops/. The glob keeps op registration
 # decentralized - re-run cmake after adding a file. We supply our own main()
 # (src/bench_main.cpp), so we link the plain benchmark lib, not benchmark_main.
+# Headers are included path-qualified from the common/ root (e.g.
+# "harness/bench_registry.hpp"), so common/ is the only include directory.
 # ----------------------------------------------------------------------------
 file(GLOB RPP_BENCH_SOURCES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/common/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/common/*/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/ops/*.cpp")
 

@@ -11,8 +11,8 @@
 
 #include <rpp/rpp.h>
 #include <nlohmann/json.hpp>
-#include "bench_enums.hpp"
-#include "bench_tensor.hpp"
+#include "config/bench_enums.hpp"
+#include "harness/bench_tensor.hpp"
 
 #include <functional>
 #include <memory>

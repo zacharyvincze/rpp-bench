@@ -3,7 +3,7 @@
 // Signature:
 //   rppt_brightness(src, srcDesc, dst, dstDesc, alphaTensor, betaTensor,
 //                   roi, roiType, handle, backend)
-#include "bench_registry.hpp"
+#include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_color_augmentations.h>
 
 namespace rppbench {

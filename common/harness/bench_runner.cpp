@@ -1,8 +1,9 @@
-#include "bench_runner.hpp"
+#include "harness/bench_runner.hpp"
 
 #include <benchmark/benchmark.h>
 
-#include "bench_registry.hpp"
+#include "harness/bench_name.hpp"
+#include "harness/bench_registry.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -22,46 +23,6 @@ bool supports(const std::vector<RpptDataType> &v, RpptDataType t) {
 }
 bool supports(const std::vector<Layout> &v, Layout l) {
     return std::find(v.begin(), v.end(), l) != v.end();
-}
-
-// A JSON scalar as a bare string ("BILINEAR", "5", "1.75") - no quotes for
-// strings, compact repr for numbers/bools.
-std::string json_scalar(const nlohmann::json &v) {
-    return v.is_string() ? v.get<std::string>() : v.dump();
-}
-
-// Compact, deterministic "k1=v1,k2=v2" encoding of a param set (empty if none).
-std::string encode_params(const nlohmann::json &p) {
-    if (!p.is_object() || p.empty())
-        return "";
-    std::vector<std::string> kv;
-    for (auto it = p.begin(); it != p.end(); ++it)
-        kv.push_back(it.key() + "=" + json_scalar(it.value()));
-    std::sort(kv.begin(), kv.end());
-    std::string s;
-    for (size_t i = 0; i < kv.size(); ++i) {
-        if (i)
-            s += ",";
-        s += kv[i];
-    }
-    return s;
-}
-
-// Parseable, filter-friendly benchmark name. json2csv.py splits this back out.
-std::string encode_name(const BenchContext &c) {
-    std::string s = "op:" + c.opName + "/backend:" + c.backendName +
-                    "/dtype:" + dtype_name(c.dtype) + "/layout:" + layout_name(c.layout) +
-                    "/batch:" + std::to_string(c.batch) + "/size:" + std::to_string(c.width) + "x" +
-                    std::to_string(c.height);
-    if (c.dstWidth != c.width || c.dstHeight != c.height)
-        s += "/dst:" + std::to_string(c.dstWidth) + "x" + std::to_string(c.dstHeight);
-    // Encode params so swept sets get unique names and appear in the output.
-    if (c.params) {
-        std::string ps = encode_params(*c.params);
-        if (!ps.empty())
-            s += "/params:" + ps;
-    }
-    return s;
 }
 
 // Expensive per-case resources (handle, stream, buffers, adapter). Google
@@ -256,7 +217,12 @@ int register_benchmarks(const BenchConfig &cfg, std::vector<std::string> *names)
                                             run_case(st, caseId, factory, ctx);
                                         });
                                     b->UseRealTime();
-                                    if (cfg.minTimeSec > 0.0)
+                                    // Iterations and MinTime are mutually exclusive in
+                                    // Google Benchmark; the config parser rejects setting
+                                    // both, so at most one branch fires here.
+                                    if (cfg.iterations > 0)
+                                        b->Iterations(cfg.iterations);
+                                    else if (cfg.minTimeSec > 0.0)
                                         b->MinTime(cfg.minTimeSec);
                                     if (cfg.repetitions > 0)
                                         b->Repetitions(cfg.repetitions);

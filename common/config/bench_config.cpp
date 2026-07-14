@@ -1,4 +1,4 @@
-#include "bench_config.hpp"
+#include "config/bench_config.hpp"
 
 #include <fstream>
 #include <stdexcept>
@@ -75,8 +75,16 @@ BenchConfig load_config(const std::string &path) {
     BenchConfig cfg;
     if (root.contains("min_time_sec"))
         cfg.minTimeSec = root.at("min_time_sec").get<double>();
+    if (root.contains("iterations"))
+        cfg.iterations = root.at("iterations").get<int>();
     if (root.contains("repetitions"))
         cfg.repetitions = root.at("repetitions").get<int>();
+    // Google Benchmark forbids fixing both an iteration count and a min time on
+    // one case; reject the ambiguous config up front rather than trip its assert.
+    if (cfg.iterations > 0 && cfg.minTimeSec > 0.0)
+        throw std::runtime_error("config sets both \"iterations\" and \"min_time_sec\"; "
+                                 "they are mutually exclusive (iterations fixes the count, "
+                                 "min_time_sec fixes the wall time)");
 
     Matrix defaults;
     if (root.contains("defaults"))

@@ -1,4 +1,4 @@
-#include "bench_tensor.hpp"
+#include "harness/bench_tensor.hpp"
 
 #include <cstdlib>
 #include <cstring>

@@ -6,7 +6,7 @@
 //
 // The runner varies the destination dimensions via the op's "dst_sizes" config
 // list; here we build the per-image RpptImagePatch tensor and pick interpolation.
-#include "bench_registry.hpp"
+#include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_geometric_augmentations.h>
 
 namespace rppbench {

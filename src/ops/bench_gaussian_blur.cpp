@@ -3,7 +3,7 @@
 // Signature:
 //   rppt_gaussian_filter(src, srcDesc, dst, dstDesc, stdDevTensor, kernelSize,
 //                        borderType, roi, roiType, handle, backend)
-#include "bench_registry.hpp"
+#include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_filter_augmentations.h>
 
 namespace rppbench {

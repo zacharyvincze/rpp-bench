@@ -1,6 +1,6 @@
 {
-  "min_time_sec": 0.01,
-  "repetitions": 1,
+  "iterations": 25,
+  "repetitions": 5,
 
   "defaults": {
     "backends": ["HIP"],

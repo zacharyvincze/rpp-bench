@@ -10,7 +10,7 @@
 
 #include <rpp/rppdefs.h>
 #include <nlohmann/json.hpp>
-#include "bench_enums.hpp"
+#include "config/bench_enums.hpp"
 
 #include <string>
 #include <utility>
@@ -42,6 +42,7 @@ struct BenchConfig {
     std::vector<OpSpec> ops;
     // Optional global knobs applied to every registered benchmark.
     double minTimeSec = 0.0; // 0 => use Google Benchmark default
+    int iterations = 0;      // 0 => unset; fixed iteration count (excludes minTimeSec)
     int repetitions = 0;     // 0 => use Google Benchmark default
 };
 
