@@ -41,9 +41,10 @@ struct OpSpec {
 struct BenchConfig {
     std::vector<OpSpec> ops;
     // Optional global knobs applied to every registered benchmark.
-    double minTimeSec = 0.0; // 0 => use Google Benchmark default
-    int iterations = 0;      // 0 => unset; fixed iteration count (excludes minTimeSec)
-    int repetitions = 0;     // 0 => use Google Benchmark default
+    double minTimeSec = 0.0;   // 0 => use Google Benchmark default
+    int iterations = 0;        // 0 => unset; fixed iteration count (excludes minTimeSec)
+    int repetitions = 0;       // 0 => use Google Benchmark default
+    int warmupIterations = 0;  // 0 => none; untimed iterations run once per case first
 };
 
 // Parse a config file. Throws std::runtime_error with a helpful message on any

@@ -79,6 +79,11 @@ BenchConfig load_config(const std::string &path) {
         cfg.iterations = root.at("iterations").get<int>();
     if (root.contains("repetitions"))
         cfg.repetitions = root.at("repetitions").get<int>();
+    if (root.contains("warmup_iterations")) {
+        cfg.warmupIterations = root.at("warmup_iterations").get<int>();
+        if (cfg.warmupIterations < 0)
+            throw std::runtime_error("config \"warmup_iterations\" must be >= 0");
+    }
     // Google Benchmark forbids fixing both an iteration count and a min time on
     // one case; reject the ambiguous config up front rather than trip its assert.
     if (cfg.iterations > 0 && cfg.minTimeSec > 0.0)

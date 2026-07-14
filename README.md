@@ -128,6 +128,7 @@ python3 scripts/plot_results.py results.json               # writes <input>.png
 {
   "min_time_sec": 0.2,        // optional: min wall time per benchmark
   "repetitions": 3,           // optional: repeats -> mean/median/stddev
+  "warmup_iterations": 5,     // optional: untimed iterations run once per case first
   "defaults": {               // base matrix; every op inherits these
     "backends":    ["HOST", "HIP"],
     "dtypes":      ["U8", "F32"],        // U8 | F32 | F16 | I8

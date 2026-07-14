@@ -34,6 +34,7 @@ struct CaseResources {
     int caseId = -1;     // which registered case currently owns these
     bool ready = false;  // successfully built
     bool failed = false; // build failed; skip without retrying every re-invoke
+    bool warmed = false; // warmup already run for this case
     std::string error;
 
     BenchContext ctx;
@@ -60,7 +61,7 @@ struct CaseResources {
             hipStream = nullptr;
         }
 #endif
-        ready = failed = false;
+        ready = failed = warmed = false;
         caseId = -1;
     }
 
@@ -100,9 +101,33 @@ struct CaseResources {
 // (Assumes single-threaded benchmarks, which is how they are registered.)
 CaseResources g_case;
 
+// One invocation of the op: refresh ROI, launch, and (on HIP) synchronize so the
+// kernel has actually finished. Shared verbatim by the warmup and timed loops so
+// warmup exercises exactly what is measured. Returns an error string on failure
+// (empty on success); `state` is only used to blame HIP faults on the right case.
+std::string run_one(const BenchContext &ctx, TensorBuffer &src, TensorBuffer &dst) {
+    // Some ops convert the ROI in place; refresh it each call so repeated
+    // invocations don't accumulate and drive indices out of bounds.
+    src.resetRoi();
+    dst.resetRoi();
+    RppStatus st = g_case.adapter->run(ctx, src, dst, g_case.handle);
+#if RPP_BENCH_HIP
+    if (ctx.isHip) {
+        // The rppt_* launch is async; a kernel fault surfaces here. Capture it
+        // so a single failure doesn't spam thousands of launches.
+        hipError_t he = hipStreamSynchronize(g_case.hipStream);
+        if (he != hipSuccess)
+            return std::string("HIP kernel fault: ") + hipGetErrorString(he);
+    }
+#endif
+    if (st != RPP_SUCCESS)
+        return "rppt call returned status " + std::to_string(st);
+    return {};
+}
+
 // The timed function body for one fully-resolved combo.
 void run_case(benchmark::State &state, int caseId, const AdapterFactory &factory,
-              const BenchContext &ctx) {
+              const BenchContext &ctx, int warmupIters) {
     if (g_case.caseId != caseId)
         g_case.build(caseId, factory, ctx); // first invocation for this case
     if (g_case.failed) {
@@ -113,26 +138,24 @@ void run_case(benchmark::State &state, int caseId, const AdapterFactory &factory
     TensorBuffer &src = g_case.src;
     TensorBuffer &dst = g_case.dst;
 
-    for (auto _ : state) {
-        (void)_; // benchmark loop sentinel; body work is what's timed
-        // Some ops convert the ROI in place; refresh it each call so repeated
-        // invocations don't accumulate and drive indices out of bounds.
-        src.resetRoi();
-        dst.resetRoi();
-        RppStatus st = g_case.adapter->run(ctx, src, dst, g_case.handle);
-#if RPP_BENCH_HIP
-        if (ctx.isHip) {
-            // The rppt_* launch is async; a kernel fault surfaces here. Capture it
-            // so a single failure doesn't spam thousands of launches.
-            hipError_t he = hipStreamSynchronize(g_case.hipStream);
-            if (he != hipSuccess) {
-                state.SkipWithError(std::string("HIP kernel fault: ") + hipGetErrorString(he));
-                break;
+    // Untimed warmup, run once per case (before the calibration ramp's first
+    // measured invocation) to reach steady clocks / paged-in buffers.
+    if (!g_case.warmed) {
+        for (int i = 0; i < warmupIters; ++i) {
+            std::string err = run_one(ctx, src, dst);
+            if (!err.empty()) {
+                state.SkipWithError(err);
+                return;
             }
         }
-#endif
-        if (st != RPP_SUCCESS) {
-            state.SkipWithError("rppt call returned status " + std::to_string(st));
+        g_case.warmed = true;
+    }
+
+    for (auto _ : state) {
+        (void)_; // benchmark loop sentinel; body work is what's timed
+        std::string err = run_one(ctx, src, dst);
+        if (!err.empty()) {
+            state.SkipWithError(err);
             break;
         }
     }
@@ -212,9 +235,11 @@ int register_benchmarks(const BenchConfig &cfg, std::vector<std::string> *names)
                                     std::string name = encode_name(ctx);
                                     if (names)
                                         names->push_back(name);
+                                    const int warmupIters = cfg.warmupIterations;
                                     auto *b = benchmark::RegisterBenchmark(
-                                        name, [caseId, factory, ctx](benchmark::State &st) {
-                                            run_case(st, caseId, factory, ctx);
+                                        name,
+                                        [caseId, factory, ctx, warmupIters](benchmark::State &st) {
+                                            run_case(st, caseId, factory, ctx, warmupIters);
                                         });
                                     b->UseRealTime();
                                     // Iterations and MinTime are mutually exclusive in
