@@ -12,9 +12,12 @@
   },
 
   "ops": [
+    { "name": "copy" },
     { "name": "brightness", "params": { "alpha": 1.75, "beta": 50 } },
     { "name": "gamma_correction", "params": { "gamma": 0.5 } },
     { "name": "contrast", "params": { "factor": 2.96, "center": 128 } },
+    { "name": "exposure", "params": { "factor": 1.5 } },
+    { "name": "vignette", "params": { "intensity": 6.0 } },
     { "name": "gaussian_blur", "params": { "kernel_size": 5, "std_dev": 1.5 } },
     { "name": "flip", "params": { "horizontal": 1, "vertical": 0 } },
     {
