@@ -104,10 +104,16 @@ struct CaseResources {
 // (Assumes single-threaded benchmarks, which is how they are registered.)
 CaseResources g_case;
 
-// One invocation of the op: refresh ROI, launch, and (on HIP) synchronize so the
-// kernel has actually finished. Shared verbatim by the warmup and timed loops so
-// warmup exercises exactly what is measured. Returns an error string on failure
-// (empty on success); `state` is only used to blame HIP faults on the right case.
+/**
+ * @brief One invocation of the op: refresh ROI, launch, and (on HIP) synchronize.
+ *
+ * On HIP it synchronizes so the kernel has actually finished. Shared verbatim by
+ * the warmup and timed loops so warmup exercises exactly what is measured.
+ * @param ctx The fully-resolved sweep point.
+ * @param src Source buffer.
+ * @param dst Destination buffer.
+ * @return An error string on failure, empty on success.
+ */
 std::string run_one(const BenchContext &ctx, TensorBuffer &src, TensorBuffer &dst) {
     // Some ops convert the ROI in place; refresh it each call so repeated
     // invocations don't accumulate and drive indices out of bounds.
@@ -128,7 +134,14 @@ std::string run_one(const BenchContext &ctx, TensorBuffer &src, TensorBuffer &ds
     return {};
 }
 
-// The timed function body for one fully-resolved combo.
+/**
+ * @brief The timed function body for one fully-resolved combo.
+ * @param state Google Benchmark state driving the timing loop.
+ * @param caseId Index of the registered case (keys the reused resources).
+ * @param factory Factory that builds the op adapter.
+ * @param ctx The fully-resolved sweep point.
+ * @param warmupIters Untimed iterations run once per case before measuring.
+ */
 void run_case(benchmark::State &state, int caseId, const AdapterFactory &factory,
               const BenchContext &ctx, int warmupIters) {
     if (g_case.caseId != caseId)

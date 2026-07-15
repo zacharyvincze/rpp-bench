@@ -1,11 +1,14 @@
-// Adapter for rppt_emboss - a per-image strength tensor + kernelSize scalar.
-//
-// Same HIP halo requirement as the other filters (12*(kernelSize/2) byte offset
-// + kernelSize/2 halo columns). kernelSize = 3/5/7/9. Only REPLICATE border.
-//
-// Signature:
-//   rppt_emboss(src, srcDesc, dst, dstDesc, strength, kernelSize, borderType,
-//               roi, roiType, handle, backend)
+/**
+ * @file bench_emboss.cpp
+ * @brief Adapter for rppt_emboss - a per-image strength tensor + kernelSize scalar.
+ *
+ * Same HIP halo requirement as the other filters (12*(kernelSize/2) byte offset
+ * + kernelSize/2 halo columns). kernelSize = 3/5/7/9. Only REPLICATE border.
+ *
+ * Signature:
+ *   rppt_emboss(src, srcDesc, dst, dstDesc, strength, kernelSize, borderType,
+ *               roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_filter_augmentations.h>
 

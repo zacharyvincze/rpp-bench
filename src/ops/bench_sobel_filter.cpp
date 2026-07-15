@@ -1,14 +1,17 @@
-// Adapter for rppt_sobel_filter - sobelType + kernelSize scalar gradient filter.
-//
-// The destination is single-channel (dstDescPtr restriction: layout = NCHW, c = 1),
-// while the harness allocates dst with the same layout as src. Restricting the
-// sweep to PLN1 keeps both src and dst single-channel NCHW and satisfies that.
-// Same HIP halo requirement as the other filters. kernelSize = 3/5/7;
-// sobelType = 0 (X) / 1 (Y) / 2 (XY).
-//
-// Signature:
-//   rppt_sobel_filter(src, srcDesc, dst, dstDesc, sobelType, kernelSize,
-//                     roi, roiType, handle, backend)
+/**
+ * @file bench_sobel_filter.cpp
+ * @brief Adapter for rppt_sobel_filter - sobelType + kernelSize scalar gradient filter.
+ *
+ * The destination is single-channel (dstDescPtr restriction: layout = NCHW, c = 1),
+ * while the harness allocates dst with the same layout as src. Restricting the
+ * sweep to PLN1 keeps both src and dst single-channel NCHW and satisfies that.
+ * Same HIP halo requirement as the other filters. kernelSize = 3/5/7;
+ * sobelType = 0 (X) / 1 (Y) / 2 (XY).
+ *
+ * Signature:
+ *   rppt_sobel_filter(src, srcDesc, dst, dstDesc, sobelType, kernelSize,
+ *                     roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_filter_augmentations.h>
 

@@ -1,10 +1,13 @@
-// Adapter for rppt_hue - one scalar (hue degrees) param per image.
-//
-// RGB-only: srcDescPtr/dstDescPtr require c = 3, so the sweep is restricted to
-// the 3-channel layouts (PKD3/PLN3).
-//
-// Signature:
-//   rppt_hue(src, srcDesc, dst, dstDesc, hueTensor, roi, roiType, handle, backend)
+/**
+ * @file bench_hue.cpp
+ * @brief Adapter for rppt_hue - one scalar (hue degrees) param per image.
+ *
+ * RGB-only: srcDescPtr/dstDescPtr require c = 3, so the sweep is restricted to
+ * the 3-channel layouts (PKD3/PLN3).
+ *
+ * Signature:
+ *   rppt_hue(src, srcDesc, dst, dstDesc, hueTensor, roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_color_augmentations.h>
 

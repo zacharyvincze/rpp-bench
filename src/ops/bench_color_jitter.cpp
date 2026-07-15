@@ -1,12 +1,15 @@
-// Adapter for rppt_color_jitter - fused brightness/contrast/hue/saturation.
-//
-// Same four per-image float tensors as color_twist; the two ops differ in the
-// order/math RPP applies internally, not in their adapter shape.
-//
-// Signature:
-//   rppt_color_jitter(src, srcDesc, dst, dstDesc, brightnessTensor,
-//                     contrastTensor, hueTensor, saturationTensor,
-//                     roi, roiType, handle, backend)
+/**
+ * @file bench_color_jitter.cpp
+ * @brief Adapter for rppt_color_jitter - fused brightness/contrast/hue/saturation.
+ *
+ * Same four per-image float tensors as color_twist; the two ops differ in the
+ * order/math RPP applies internally, not in their adapter shape.
+ *
+ * Signature:
+ *   rppt_color_jitter(src, srcDesc, dst, dstDesc, brightnessTensor,
+ *                     contrastTensor, hueTensor, saturationTensor,
+ *                     roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_color_augmentations.h>
 

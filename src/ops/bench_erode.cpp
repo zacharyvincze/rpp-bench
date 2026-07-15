@@ -1,12 +1,15 @@
-// Adapter for rppt_erode - kernelSize-scalar morphological erosion.
-//
-// Morphological ops carry the same source halo requirement as the filters
-// (offsetInBytes >= 12*(kernelSize/2) + a kernelSize/2 column margin); unlike
-// the filter kernels the offset check is enforced on both HOST and HIP, so the
-// halo is always supplied. kernelSize = 3/5/7/9.
-//
-// Signature:
-//   rppt_erode(src, srcDesc, dst, dstDesc, kernelSize, roi, roiType, handle, backend)
+/**
+ * @file bench_erode.cpp
+ * @brief Adapter for rppt_erode - kernelSize-scalar morphological erosion.
+ *
+ * Morphological ops carry the same source halo requirement as the filters
+ * (offsetInBytes >= 12*(kernelSize/2) + a kernelSize/2 column margin); unlike
+ * the filter kernels the offset check is enforced on both HOST and HIP, so the
+ * halo is always supplied. kernelSize = 3/5/7/9.
+ *
+ * Signature:
+ *   rppt_erode(src, srcDesc, dst, dstDesc, kernelSize, roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_morphological_operations.h>
 

@@ -1,8 +1,11 @@
-// Adapter for rppt_vignette - one scalar (intensity) param per image.
-//
-// Signature:
-//   rppt_vignette(src, srcDesc, dst, dstDesc, vignetteIntensityTensor,
-//                 roi, roiType, handle, backend)
+/**
+ * @file bench_vignette.cpp
+ * @brief Adapter for rppt_vignette - one scalar (intensity) param per image.
+ *
+ * Signature:
+ *   rppt_vignette(src, srcDesc, dst, dstDesc, vignetteIntensityTensor,
+ *                 roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_effects_augmentations.h>
 

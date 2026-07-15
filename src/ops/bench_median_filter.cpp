@@ -1,12 +1,15 @@
-// Adapter for rppt_median_filter - a kernelSize-scalar median filter.
-//
-// Same HIP halo requirement as the other filters (12*(kernelSize/2) byte offset
-// + kernelSize/2 halo columns). kernelSize = 3/5/7/9 are the optimized sizes.
-// Only REPLICATE border is supported.
-//
-// Signature:
-//   rppt_median_filter(src, srcDesc, dst, dstDesc, kernelSize, borderType,
-//                      roi, roiType, handle, backend)
+/**
+ * @file bench_median_filter.cpp
+ * @brief Adapter for rppt_median_filter - a kernelSize-scalar median filter.
+ *
+ * Same HIP halo requirement as the other filters (12*(kernelSize/2) byte offset
+ * + kernelSize/2 halo columns). kernelSize = 3/5/7/9 are the optimized sizes.
+ * Only REPLICATE border is supported.
+ *
+ * Signature:
+ *   rppt_median_filter(src, srcDesc, dst, dstDesc, kernelSize, borderType,
+ *                      roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_filter_augmentations.h>
 

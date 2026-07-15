@@ -1,13 +1,16 @@
-// Adapter for rppt_box_filter - a kernelSize-scalar box (mean) filter.
-//
-// Like all RPP filter kernels, the HIP path requires the source buffer to carry
-// a leading offset of 12*(kernelSize/2) bytes plus a kernelSize/2 halo column
-// margin for neighbor reads (see bench_gaussian_blur.cpp for the pattern).
-// kernelSize = 3/5/7/9 are the optimized sizes. Only REPLICATE border is supported.
-//
-// Signature:
-//   rppt_box_filter(src, srcDesc, dst, dstDesc, kernelSize, borderType,
-//                   roi, roiType, handle, backend)
+/**
+ * @file bench_box_filter.cpp
+ * @brief Adapter for rppt_box_filter - a kernelSize-scalar box (mean) filter.
+ *
+ * Like all RPP filter kernels, the HIP path requires the source buffer to carry
+ * a leading offset of 12*(kernelSize/2) bytes plus a kernelSize/2 halo column
+ * margin for neighbor reads (see bench_gaussian_blur.cpp for the pattern).
+ * kernelSize = 3/5/7/9 are the optimized sizes. Only REPLICATE border is supported.
+ *
+ * Signature:
+ *   rppt_box_filter(src, srcDesc, dst, dstDesc, kernelSize, borderType,
+ *                   roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_filter_augmentations.h>
 

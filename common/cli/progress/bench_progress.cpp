@@ -1,12 +1,13 @@
-// ============================================================================
-// bench_progress.cpp - shared base for the --progress live reporters.
-//
-// count_matching() mirrors Google Benchmark's filter so the progress denominator
-// is right. ProgressReporter::sample() digests each ReportRuns callback (case
-// de-duplication + picking the representative run) so both display styles share
-// it. draw_plain_line() is the plain readout used by SimpleProgressReporter and
-// by the dashboard's non-TTY fallback.
-// ============================================================================
+/**
+ * @file bench_progress.cpp
+ * @brief Shared base for the --progress live reporters.
+ *
+ * count_matching() mirrors Google Benchmark's filter so the progress denominator
+ * is right. ProgressReporter::sample() digests each ReportRuns callback (case
+ * de-duplication + picking the representative run) so both display styles share
+ * it. draw_plain_line() is the plain readout used by SimpleProgressReporter and
+ * by the dashboard's non-TTY fallback.
+ */
 #include "cli/progress/bench_progress.hpp"
 
 #include <array>
@@ -38,8 +39,14 @@ int count_matching(const std::vector<std::string> &names, std::string filter) {
 
 namespace {
 
-// Value in `unit` normalized to milliseconds (so callers can compare across the
-// per-case time units Google Benchmark may pick).
+/**
+ * @brief Normalize a value to milliseconds.
+ *
+ * So callers can compare across the per-case time units Google Benchmark may pick.
+ * @param v The value in unit @p u.
+ * @param u The time unit of @p v.
+ * @return @p v expressed in milliseconds.
+ */
 double to_ms(double v, benchmark::TimeUnit u) {
     switch (u) {
     case benchmark::kNanosecond:

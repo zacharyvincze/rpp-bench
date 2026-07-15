@@ -1,8 +1,11 @@
-// Adapter for rppt_gaussian_filter - per-image std-dev + a kernel-size param.
-//
-// Signature:
-//   rppt_gaussian_filter(src, srcDesc, dst, dstDesc, stdDevTensor, kernelSize,
-//                        borderType, roi, roiType, handle, backend)
+/**
+ * @file bench_gaussian_blur.cpp
+ * @brief Adapter for rppt_gaussian_filter - per-image std-dev + a kernel-size param.
+ *
+ * Signature:
+ *   rppt_gaussian_filter(src, srcDesc, dst, dstDesc, stdDevTensor, kernelSize,
+ *                        borderType, roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_filter_augmentations.h>
 

@@ -1,6 +1,7 @@
-// ============================================================================
-// bench_cli.cpp - command-line argument handling for the benchmark harness.
-// ============================================================================
+/**
+ * @file bench_cli.cpp
+ * @brief Command-line argument handling for the benchmark harness.
+ */
 #include "cli/bench_cli.hpp"
 
 #include <cstdio>
@@ -81,9 +82,14 @@ std::string extract_progress(int &argc, char **argv) {
     return mode;
 }
 
-// Detailed usage. Covers this harness's own flags plus a quick reference to the
-// Google Benchmark flags that are forwarded unchanged, so users don't have to
-// cross-check `--help` from a stock benchmark binary.
+/**
+ * @brief Print detailed usage.
+ *
+ * Covers this harness's own flags plus a quick reference to the Google Benchmark
+ * flags that are forwarded unchanged, so users don't have to cross-check
+ * `--help` from a stock benchmark binary.
+ * @param prog The program name (argv[0]).
+ */
 void print_help(const char *prog) {
     std::printf("rpp_bench - config-driven micro-benchmarks for RPP operators.\n"
                 "\n"

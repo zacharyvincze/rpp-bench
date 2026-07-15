@@ -26,9 +26,14 @@ namespace rppbench {
 
 #if RPP_BENCH_HIP
 namespace {
-// One process-lifetime generator, created lazily and reused across every case
-// so per-case setup is just a device-side generate (no host fill, no H2D copy).
-// Not thread-safe, which matches the single-threaded benchmark registration.
+/**
+ * @brief Obtain the process-lifetime rocRAND generator.
+ *
+ * Created lazily and reused across every case so per-case setup is just a
+ * device-side generate (no host fill, no H2D copy). Not thread-safe, which
+ * matches the single-threaded benchmark registration.
+ * @return The shared rocRAND generator.
+ */
 rocrand_generator device_rng() {
     static rocrand_generator gen = [] {
         rocrand_generator g = nullptr;

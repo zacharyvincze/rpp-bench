@@ -1,6 +1,7 @@
-// ============================================================================
-// bench_name.cpp - the benchmark-name encoding (see bench_name.hpp).
-// ============================================================================
+/**
+ * @file bench_name.cpp
+ * @brief The benchmark-name encoding (see bench_name.hpp).
+ */
 #include "harness/bench_name.hpp"
 
 #include "config/bench_enums.hpp"
@@ -13,13 +14,22 @@ namespace rppbench {
 
 namespace {
 
-// A JSON scalar as a bare string ("BILINEAR", "5", "1.75") - no quotes for
-// strings, compact repr for numbers/bools.
+/**
+ * @brief Render a JSON scalar as a bare string ("BILINEAR", "5", "1.75").
+ *
+ * No quotes for strings, compact repr for numbers/bools.
+ * @param v The JSON scalar.
+ * @return The bare-string rendering.
+ */
 std::string json_scalar(const nlohmann::json &v) {
     return v.is_string() ? v.get<std::string>() : v.dump();
 }
 
-// Compact, deterministic "k1=v1,k2=v2" encoding of a param set (empty if none).
+/**
+ * @brief Compact, deterministic "k1=v1,k2=v2" encoding of a param set.
+ * @param p The param set object.
+ * @return The encoded params, or empty if none.
+ */
 std::string encode_params(const nlohmann::json &p) {
     if (!p.is_object() || p.empty())
         return "";

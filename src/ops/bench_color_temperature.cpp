@@ -1,10 +1,13 @@
-// Adapter for rppt_color_temperature - one integer (adjustment) param per image.
-//
-// The adjustment tensor is Rpp32s (signed), range -100..100.
-//
-// Signature:
-//   rppt_color_temperature(src, srcDesc, dst, dstDesc, adjustmentValueTensor,
-//                          roi, roiType, handle, backend)
+/**
+ * @file bench_color_temperature.cpp
+ * @brief Adapter for rppt_color_temperature - one integer (adjustment) param per image.
+ *
+ * The adjustment tensor is Rpp32s (signed), range -100..100.
+ *
+ * Signature:
+ *   rppt_color_temperature(src, srcDesc, dst, dstDesc, adjustmentValueTensor,
+ *                          roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_color_augmentations.h>
 

@@ -1,8 +1,11 @@
-// Adapter for rppt_flip - per-image horizontal/vertical flip flags.
-//
-// Signature:
-//   rppt_flip(src, srcDesc, dst, dstDesc, horizontalTensor, verticalTensor,
-//             roi, roiType, handle, backend)
+/**
+ * @file bench_flip.cpp
+ * @brief Adapter for rppt_flip - per-image horizontal/vertical flip flags.
+ *
+ * Signature:
+ *   rppt_flip(src, srcDesc, dst, dstDesc, horizontalTensor, verticalTensor,
+ *             roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_geometric_augmentations.h>
 

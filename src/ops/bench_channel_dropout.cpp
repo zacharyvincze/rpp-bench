@@ -1,12 +1,15 @@
-// Adapter for rppt_channel_dropout - a per-channel keep/drop mask per image.
-//
-// dropoutTensor is an Rpp8u tensor of size batchSize * channels, each value
-// 0 (drop) or 1 (keep). We keep all channels (all 1s) so the benchmark measures
-// the op's steady-state cost rather than a degenerate all-dropped path.
-//
-// Signature:
-//   rppt_channel_dropout(src, srcDesc, dst, dstDesc, dropoutTensor,
-//                        roi, roiType, handle, backend)
+/**
+ * @file bench_channel_dropout.cpp
+ * @brief Adapter for rppt_channel_dropout - a per-channel keep/drop mask per image.
+ *
+ * dropoutTensor is an Rpp8u tensor of size batchSize * channels, each value
+ * 0 (drop) or 1 (keep). We keep all channels (all 1s) so the benchmark measures
+ * the op's steady-state cost rather than a degenerate all-dropped path.
+ *
+ * Signature:
+ *   rppt_channel_dropout(src, srcDesc, dst, dstDesc, dropoutTensor,
+ *                        roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_effects_augmentations.h>
 

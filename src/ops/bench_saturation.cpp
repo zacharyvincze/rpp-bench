@@ -1,11 +1,14 @@
-// Adapter for rppt_saturation - one scalar (saturation factor) param per image.
-//
-// RGB-only: srcDescPtr/dstDescPtr require c = 3, so the sweep is restricted to
-// the 3-channel layouts (PKD3/PLN3).
-//
-// Signature:
-//   rppt_saturation(src, srcDesc, dst, dstDesc, saturationTensor,
-//                   roi, roiType, handle, backend)
+/**
+ * @file bench_saturation.cpp
+ * @brief Adapter for rppt_saturation - one scalar (saturation factor) param per image.
+ *
+ * RGB-only: srcDescPtr/dstDescPtr require c = 3, so the sweep is restricted to
+ * the 3-channel layouts (PKD3/PLN3).
+ *
+ * Signature:
+ *   rppt_saturation(src, srcDesc, dst, dstDesc, saturationTensor,
+ *                   roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_color_augmentations.h>
 

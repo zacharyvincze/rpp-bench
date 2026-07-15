@@ -1,10 +1,13 @@
-// Adapter for rppt_posterize - one 8-bit (level-bits) param per image.
-//
-// posterizeLevelBits is an Rpp8u tensor, range 1..8 (bits kept per channel).
-//
-// Signature:
-//   rppt_posterize(src, srcDesc, dst, dstDesc, posterizeLevelBits,
-//                  roi, roiType, handle, backend)
+/**
+ * @file bench_posterize.cpp
+ * @brief Adapter for rppt_posterize - one 8-bit (level-bits) param per image.
+ *
+ * posterizeLevelBits is an Rpp8u tensor, range 1..8 (bits kept per channel).
+ *
+ * Signature:
+ *   rppt_posterize(src, srcDesc, dst, dstDesc, posterizeLevelBits,
+ *                  roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_effects_augmentations.h>
 

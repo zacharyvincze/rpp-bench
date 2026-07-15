@@ -1,6 +1,7 @@
-// ============================================================================
-// bench_progress_simple.cpp - the plain --progress=simple reporter.
-// ============================================================================
+/**
+ * @file bench_progress_simple.cpp
+ * @brief The plain --progress=simple reporter.
+ */
 #include "cli/progress/bench_progress_simple.hpp"
 
 #include <cstdio>

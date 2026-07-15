@@ -1,19 +1,20 @@
-// ============================================================================
-// bench_main.cpp - entry point for the RPP benchmark harness.
-//
-// We provide our own main (rather than benchmark_main) so the run config can be
-// loaded and benchmarks registered *before* RunSpecifiedBenchmarks().
-//
-// Usage:
-//   ./rpp_bench --config=../config/example.json [google-benchmark flags...]
-//   ./rpp_bench --list-ops
-//   ./rpp_bench --config=cfg.json --benchmark_out=results.json --benchmark_out_format=json
-//   ./rpp_bench --config=cfg.json --progress    # compact live progress line
-//   ./rpp_bench --help                          # detailed usage
-//
-// Argument handling lives in bench_cli, the --progress display in bench_progress,
-// and the matrix expansion in bench_runner; this file just wires them together.
-// ============================================================================
+/**
+ * @file bench_main.cpp
+ * @brief Entry point for the RPP benchmark harness.
+ *
+ * We provide our own main (rather than benchmark_main) so the run config can be
+ * loaded and benchmarks registered before RunSpecifiedBenchmarks().
+ *
+ * Usage:
+ *   ./rpp_bench --config=../config/example.json [google-benchmark flags...]
+ *   ./rpp_bench --list-ops
+ *   ./rpp_bench --config=cfg.json --benchmark_out=results.json --benchmark_out_format=json
+ *   ./rpp_bench --config=cfg.json --progress    # compact live progress line
+ *   ./rpp_bench --help                          # detailed usage
+ *
+ * Argument handling lives in bench_cli, the --progress display in bench_progress,
+ * and the matrix expansion in bench_runner; this file just wires them together.
+ */
 #include <benchmark/benchmark.h>
 
 #include "cli/bench_cli.hpp"

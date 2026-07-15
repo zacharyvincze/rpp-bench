@@ -1,8 +1,11 @@
-// Adapter for rppt_brightness - scalar (alpha, beta) params per image.
-//
-// Signature:
-//   rppt_brightness(src, srcDesc, dst, dstDesc, alphaTensor, betaTensor,
-//                   roi, roiType, handle, backend)
+/**
+ * @file bench_brightness.cpp
+ * @brief Adapter for rppt_brightness - scalar (alpha, beta) params per image.
+ *
+ * Signature:
+ *   rppt_brightness(src, srcDesc, dst, dstDesc, alphaTensor, betaTensor,
+ *                   roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_color_augmentations.h>
 

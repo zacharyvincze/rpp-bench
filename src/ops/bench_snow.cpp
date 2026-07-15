@@ -1,10 +1,13 @@
-// Adapter for rppt_snow - per-image brightness coeff + threshold + dark-mode.
-//
-// darkMode is an Rpp32s tensor (0/1); the other two are float tensors.
-//
-// Signature:
-//   rppt_snow(src, srcDesc, dst, dstDesc, brightnessCoefficient, snowThreshold,
-//             darkMode, roi, roiType, handle, backend)
+/**
+ * @file bench_snow.cpp
+ * @brief Adapter for rppt_snow - per-image brightness coeff + threshold + dark-mode.
+ *
+ * darkMode is an Rpp32s tensor (0/1); the other two are float tensors.
+ *
+ * Signature:
+ *   rppt_snow(src, srcDesc, dst, dstDesc, brightnessCoefficient, snowThreshold,
+ *             darkMode, roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_effects_augmentations.h>
 

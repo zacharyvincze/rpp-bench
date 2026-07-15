@@ -1,10 +1,11 @@
-// ============================================================================
-// bench_progress_simple.hpp - the plain --progress=simple reporter.
-//
-// One self-overwriting ASCII progress line on stderr (the default style). Full
-// results still go to --benchmark_out. The line rendering itself is the shared
-// draw_plain_line() in progress/bench_progress.hpp.
-// ============================================================================
+/**
+ * @file bench_progress_simple.hpp
+ * @brief The plain --progress=simple reporter.
+ *
+ * One self-overwriting ASCII progress line on stderr (the default style). Full
+ * results still go to --benchmark_out. The line rendering itself is the shared
+ * draw_plain_line() in progress/bench_progress.hpp.
+ */
 #ifndef RPP_BENCH_PROGRESS_SIMPLE_HPP
 #define RPP_BENCH_PROGRESS_SIMPLE_HPP
 

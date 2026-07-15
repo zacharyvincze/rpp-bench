@@ -38,7 +38,7 @@ python3 scripts/plot_results.py results.json -o results.png # needs matplotlib +
 
 Flow: `bench_main.cpp` loads a `BenchConfig` → `register_benchmarks()` expands the matrix and registers one Google Benchmark per combo → Google Benchmark runs them → `release_active_resources()` frees the last case.
 
-The harness lives in `common/`, grouped by role into three subdirectories. Headers are included **path-qualified from the `common/` root** (e.g. `#include "harness/bench_registry.hpp"`), and `common/` is the only include directory.
+The harness lives in `common/`, grouped by role into four subdirectories. Headers are included **path-qualified from the `common/` root** (e.g. `#include "harness/bench_registry.hpp"`), and `common/` is the only include directory.
 
 `common/config/`
 - **`bench_config.*`** — parses the JSON into `BenchConfig` (global `min_time_sec` / `repetitions`, a list of `OpSpec`). Each op inherits `defaults` and may override any matrix axis. `params` (one set) and `param_sets` (a swept list) are mutually exclusive and both normalize into `OpSpec::paramSets` (always ≥1 entry).
@@ -51,8 +51,12 @@ The harness lives in `common/`, grouped by role into three subdirectories. Heade
 - **`bench_name.*`** — `encode_name()`, the benchmark-name encoding (its own file because it's a contract with `scripts/json2csv.py`).
 
 `common/cli/`
-- **`bench_cli.*`** — argument munging (`--config`, `--list-ops`, `--progress`) pulled out of argv before Google Benchmark's parser sees it, plus the `--help` text.
-- **`bench_progress.*`** — the `--progress` display: `ProgressReporter` (a Google Benchmark reporter) and `count_matching()` (so the progress denominator respects `--benchmark_filter`).
+- **`bench_cli.*`** — argument munging (`--config`, `--list-ops`, `--progress[=simple|fancy]`) pulled out of argv before Google Benchmark's parser sees it, plus the `--help` text.
+
+`common/progress/` — the `--progress` live reporters, one Google Benchmark reporter per file.
+- **`bench_progress.*`** — the shared `ProgressReporter` base (case-counting + run sampling), `count_matching()` (so the progress denominator respects `--benchmark_filter`), and the shared plain-line renderer.
+- **`bench_progress_simple.*`** — `SimpleProgressReporter`: the default one-line style.
+- **`bench_progress_dashboard.*`** — `DashboardProgressReporter`: the `--progress=fancy` bordered TTY dashboard (gradient bar, ETA, throughput, sparkline, backend/dtype tally), falling back to the plain line off a TTY.
 
 `src/`
 - **`bench_main.cpp`** — the entry point; just wires the above together.

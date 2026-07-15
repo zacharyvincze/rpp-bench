@@ -1,13 +1,13 @@
 {
-  "iterations": 10,
+  "iterations": 25,
   "repetitions": 1,
-  "warmup_iterations": 5,
+  "warmup_iterations": 10,
 
   "defaults": {
     "backends": ["HIP"],
     "dtypes": ["U8", "F32"],
     "layouts": ["PKD3", "PLN3"],
-    "batch_sizes": [1, 8, 64, 128],
+    "batch_sizes": [1, 8, 64],
     "image_sizes": [[224, 224], [1920, 1080]]
   },
 

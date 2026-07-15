@@ -1,8 +1,11 @@
-// Adapter for rppt_gamma_correction - one scalar (gamma) param per image.
-//
-// Signature:
-//   rppt_gamma_correction(src, srcDesc, dst, dstDesc, gammaTensor,
-//                         roi, roiType, handle, backend)
+/**
+ * @file bench_gamma_correction.cpp
+ * @brief Adapter for rppt_gamma_correction - one scalar (gamma) param per image.
+ *
+ * Signature:
+ *   rppt_gamma_correction(src, srcDesc, dst, dstDesc, gammaTensor,
+ *                         roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_color_augmentations.h>
 

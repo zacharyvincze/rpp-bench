@@ -1,10 +1,13 @@
-// Adapter for rppt_copy - a plain buffer copy, no params and no ROI.
-//
-// Useful as a memory-bandwidth baseline: it isolates the src->dst copy cost
-// that every other op also pays, so richer ops can be read relative to it.
-//
-// Signature:
-//   rppt_copy(src, srcDesc, dst, dstDesc, handle, backend)
+/**
+ * @file bench_copy.cpp
+ * @brief Adapter for rppt_copy - a plain buffer copy, no params and no ROI.
+ *
+ * Useful as a memory-bandwidth baseline: it isolates the src->dst copy cost
+ * that every other op also pays, so richer ops can be read relative to it.
+ *
+ * Signature:
+ *   rppt_copy(src, srcDesc, dst, dstDesc, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_data_exchange_operations.h>
 

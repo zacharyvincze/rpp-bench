@@ -1,12 +1,13 @@
-// ============================================================================
-// bench_progress_dashboard.hpp - the fancy --progress=fancy reporter.
-//
-// A bordered TTY dashboard (gradient Unicode bar, elapsed / ETA / throughput,
-// the current case, a sparkline of recent timings, and a running backend/dtype
-// tally), re-queried against the terminal width each frame so it reflows on
-// resize. Degrades to the shared plain line (progress/bench_progress.hpp) when
-// stderr is not a TTY, so logs and pipes stay readable.
-// ============================================================================
+/**
+ * @file bench_progress_dashboard.hpp
+ * @brief The fancy --progress=fancy reporter.
+ *
+ * A bordered TTY dashboard (gradient Unicode bar, elapsed / ETA / throughput,
+ * the current case, a sparkline of recent timings, and a running backend/dtype
+ * tally), re-queried against the terminal width each frame so it reflows on
+ * resize. Degrades to the shared plain line (progress/bench_progress.hpp) when
+ * stderr is not a TTY, so logs and pipes stay readable.
+ */
 #ifndef RPP_BENCH_PROGRESS_DASHBOARD_HPP
 #define RPP_BENCH_PROGRESS_DASHBOARD_HPP
 

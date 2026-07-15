@@ -25,7 +25,11 @@ std::vector<std::pair<int, int>> parse_sizes(const json &j) {
     return out;
 }
 
-// Overlay any axis present in `j` onto `m` (per-op overrides beat defaults).
+/**
+ * @brief Overlay any axis present in @p j onto @p m (per-op overrides beat defaults).
+ * @param m The matrix to update in place.
+ * @param j The JSON object to read axis overrides from.
+ */
 void merge_matrix(Matrix &m, const json &j) {
     if (j.contains("backends"))
         m.backends = j.at("backends").get<std::vector<std::string>>();

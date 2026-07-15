@@ -1,11 +1,14 @@
-// Adapter for rppt_solarize - one scalar (threshold) param per image.
-//
-// Threshold is normalized (0..1) regardless of dtype, so a single value works
-// across the whole dtype sweep.
-//
-// Signature:
-//   rppt_solarize(src, srcDesc, dst, dstDesc, thresholdTensor,
-//                 roi, roiType, handle, backend)
+/**
+ * @file bench_solarize.cpp
+ * @brief Adapter for rppt_solarize - one scalar (threshold) param per image.
+ *
+ * Threshold is normalized (0..1) regardless of dtype, so a single value works
+ * across the whole dtype sweep.
+ *
+ * Signature:
+ *   rppt_solarize(src, srcDesc, dst, dstDesc, thresholdTensor,
+ *                 roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_effects_augmentations.h>
 

@@ -1,11 +1,14 @@
-// Adapter for rppt_resize - destination sizes + interpolation type.
-//
-// Signature:
-//   rppt_resize(src, srcDesc, dst, dstDesc, dstImgSizes, interpolationType,
-//               roi, roiType, handle, backend)
-//
-// The runner varies the destination dimensions via the op's "dst_sizes" config
-// list; here we build the per-image RpptImagePatch tensor and pick interpolation.
+/**
+ * @file bench_resize.cpp
+ * @brief Adapter for rppt_resize - destination sizes + interpolation type.
+ *
+ * Signature:
+ *   rppt_resize(src, srcDesc, dst, dstDesc, dstImgSizes, interpolationType,
+ *               roi, roiType, handle, backend)
+ *
+ * The runner varies the destination dimensions via the op's "dst_sizes" config
+ * list; here we build the per-image RpptImagePatch tensor and pick interpolation.
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_geometric_augmentations.h>
 

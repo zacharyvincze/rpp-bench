@@ -1,8 +1,11 @@
-// Adapter for rppt_exposure - one scalar (exposure factor) param per image.
-//
-// Signature:
-//   rppt_exposure(src, srcDesc, dst, dstDesc, exposureFactorTensor,
-//                 roi, roiType, handle, backend)
+/**
+ * @file bench_exposure.cpp
+ * @brief Adapter for rppt_exposure - one scalar (exposure factor) param per image.
+ *
+ * Signature:
+ *   rppt_exposure(src, srcDesc, dst, dstDesc, exposureFactorTensor,
+ *                 roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_color_augmentations.h>
 

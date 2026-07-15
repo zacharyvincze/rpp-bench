@@ -1,10 +1,13 @@
-// Adapter for rppt_dilate - kernelSize-scalar morphological dilation.
-//
-// Same source halo requirement as erode (offsetInBytes >= 12*(kernelSize/2) plus
-// a kernelSize/2 column margin, enforced on both HOST and HIP). kernelSize = 3/5/7/9.
-//
-// Signature:
-//   rppt_dilate(src, srcDesc, dst, dstDesc, kernelSize, roi, roiType, handle, backend)
+/**
+ * @file bench_dilate.cpp
+ * @brief Adapter for rppt_dilate - kernelSize-scalar morphological dilation.
+ *
+ * Same source halo requirement as erode (offsetInBytes >= 12*(kernelSize/2) plus
+ * a kernelSize/2 column margin, enforced on both HOST and HIP). kernelSize = 3/5/7/9.
+ *
+ * Signature:
+ *   rppt_dilate(src, srcDesc, dst, dstDesc, kernelSize, roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_morphological_operations.h>
 

@@ -1,8 +1,11 @@
-// Adapter for rppt_contrast - per-image contrast factor + contrast center.
-//
-// Signature:
-//   rppt_contrast(src, srcDesc, dst, dstDesc, contrastFactorTensor,
-//                 contrastCenterTensor, roi, roiType, handle, backend)
+/**
+ * @file bench_contrast.cpp
+ * @brief Adapter for rppt_contrast - per-image contrast factor + contrast center.
+ *
+ * Signature:
+ *   rppt_contrast(src, srcDesc, dst, dstDesc, contrastFactorTensor,
+ *                 contrastCenterTensor, roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_color_augmentations.h>
 

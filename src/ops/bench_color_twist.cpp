@@ -1,11 +1,14 @@
-// Adapter for rppt_color_twist - fused brightness/contrast/hue/saturation.
-//
-// Four per-image float tensors, one per adjusted attribute.
-//
-// Signature:
-//   rppt_color_twist(src, srcDesc, dst, dstDesc, brightnessTensor,
-//                    contrastTensor, hueTensor, saturationTensor,
-//                    roi, roiType, handle, backend)
+/**
+ * @file bench_color_twist.cpp
+ * @brief Adapter for rppt_color_twist - fused brightness/contrast/hue/saturation.
+ *
+ * Four per-image float tensors, one per adjusted attribute.
+ *
+ * Signature:
+ *   rppt_color_twist(src, srcDesc, dst, dstDesc, brightnessTensor,
+ *                    contrastTensor, hueTensor, saturationTensor,
+ *                    roi, roiType, handle, backend)
+ */
 #include "harness/bench_registry.hpp"
 #include <rpp/rppt_tensor_color_augmentations.h>
 

@@ -1,10 +1,11 @@
-// ============================================================================
-// bench_enums.hpp - string <-> RPP enum helpers used across the harness.
-//
-// The config file speaks in human strings ("U8", "PKD3", "BILINEAR"); the RPP
-// API speaks in enums. Keep the mapping in one place so config parsing, name
-// encoding and adapters all agree.
-// ============================================================================
+/**
+ * @file bench_enums.hpp
+ * @brief String <-> RPP enum helpers used across the harness.
+ *
+ * The config file speaks in human strings ("U8", "PKD3", "BILINEAR"); the RPP
+ * API speaks in enums. Keep the mapping in one place so config parsing, name
+ * encoding and adapters all agree.
+ */
 #ifndef RPP_BENCH_ENUMS_HPP
 #define RPP_BENCH_ENUMS_HPP
 

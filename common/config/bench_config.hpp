@@ -1,10 +1,11 @@
-// ============================================================================
-// bench_config.hpp - the runtime sweep description, parsed from a JSON file.
-//
-// A config has "defaults" (a base matrix) plus a list of "ops". Each op inherits
-// the defaults and may override any matrix axis, add per-op params, and (for
-// resize-like ops) list destination sizes. Changing the sweep needs no rebuild.
-// ============================================================================
+/**
+ * @file bench_config.hpp
+ * @brief The runtime sweep description, parsed from a JSON file.
+ *
+ * A config has "defaults" (a base matrix) plus a list of "ops". Each op inherits
+ * the defaults and may override any matrix axis, add per-op params, and (for
+ * resize-like ops) list destination sizes. Changing the sweep needs no rebuild.
+ */
 #ifndef RPP_BENCH_CONFIG_HPP
 #define RPP_BENCH_CONFIG_HPP
 
@@ -41,14 +42,18 @@ struct OpSpec {
 struct BenchConfig {
     std::vector<OpSpec> ops;
     // Optional global knobs applied to every registered benchmark.
-    double minTimeSec = 0.0;   // 0 => use Google Benchmark default
-    int iterations = 0;        // 0 => unset; fixed iteration count (excludes minTimeSec)
-    int repetitions = 0;       // 0 => use Google Benchmark default
-    int warmupIterations = 0;  // 0 => none; untimed iterations run once per case first
+    double minTimeSec = 0.0;  // 0 => use Google Benchmark default
+    int iterations = 0;       // 0 => unset; fixed iteration count (excludes minTimeSec)
+    int repetitions = 0;      // 0 => use Google Benchmark default
+    int warmupIterations = 0; // 0 => none; untimed iterations run once per case first
 };
 
-// Parse a config file. Throws std::runtime_error with a helpful message on any
-// malformed field.
+/**
+ * @brief Parse a config file.
+ * @param path Path to the JSON config file.
+ * @return The parsed sweep description.
+ * @throws std::runtime_error with a helpful message on any malformed field.
+ */
 BenchConfig load_config(const std::string &path);
 
 } // namespace rppbench
