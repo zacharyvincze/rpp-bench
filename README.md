@@ -195,7 +195,7 @@ Flow: `bench_main.cpp` loads a `BenchConfig` → `register_benchmarks()` expands
 
 ## Operators
 
-38 RPP tensor operators currently have adapters. The tables below track coverage by RPP category — ✅ ops are implemented and available in a config's `name` field, ☐ ops are a contribution roadmap (see [Adding an op](#adding-an-op)). The notes column lists config params and any sweep constraints an adapter imposes via its `supported*()` overrides.
+46 RPP tensor operators currently have adapters. The tables below track coverage by RPP category — ✅ ops are implemented and available in a config's `name` field, ☐ ops are a contribution roadmap (see [Adding an op](#adding-an-op)). The notes column lists config params and any sweep constraints an adapter imposes via its `supported*()` overrides.
 
 ### Color augmentations
 
@@ -211,9 +211,9 @@ Flow: `bench_main.cpp` loads a `BenchConfig` → `register_benchmarks()` expands
 | `color_twist` | ✅ | `brightness`, `contrast`, `hue`, `saturation` |
 | `color_jitter` | ✅ | `brightness`, `contrast`, `hue`, `saturation` |
 | `histogram_equalize` | ✅ | no params — U8 only; HOST only (HIP kernel leaks an internal scratch buffer) |
+| `color_cast` | ✅ | `r`, `g`, `b`, `alpha` — RGB only (PKD3/PLN3) |
+| `lut` | ✅ | identity 65536-entry table — U8/I8 only |
 | `blend` | ☐ | two-source |
-| `color_cast` | ☐ | `RpptRGB` struct param |
-| `lut` | ☐ | 65536-entry lookup buffer |
 
 ### Effects augmentations
 
@@ -232,11 +232,11 @@ Flow: `bench_main.cpp` loads a `BenchConfig` → `register_benchmarks()` expands
 | `gridmask` | ✅ | `tile_width`, `grid_ratio`, `grid_angle`, `translate_x`, `translate_y` |
 | `spatter` | ✅ | `r`, `g`, `b` (RpptRGB by value) — RGB only (PKD3/PLN3) |
 | `rain` | ✅ | `rain_percentage`, `rain_width`, `rain_height`, `slant_angle`, `alpha` — stages via RPP host scratch (~0.4 GB × batch); keep batch modest on low-RAM hosts |
+| `erase` | ✅ | one centred box/image, RGB colour — 3-channel only |
+| `glitch` | ✅ | `r_x`/`r_y`/`g_x`/`g_y`/`b_x`/`b_y` channel offsets — 3-channel only |
 | `non_linear_blend` | ☐ | two-source |
 | `water` | ☐ | |
 | `ricap` | ☐ | |
-| `erase` | ☐ | anchor boxes + colors |
-| `glitch` | ☐ | `RpptChannelOffsets` param |
 | `pixelate` | ☐ | external scratch buffer |
 | `cutout_dropout` | ☐ | |
 | `grid_dropout` | ☐ | |
@@ -270,10 +270,10 @@ Flow: `bench_main.cpp` loads a `BenchConfig` → `register_benchmarks()` expands
 | `rotate` | ✅ | `angle`, `interpolation` |
 | `warp_affine` | ✅ | `angle`, `interpolation` — rotation affine built from `angle` |
 | `warp_perspective` | ✅ | `angle`, `interpolation` — rotation homography built from `angle` |
-| `crop` | ☐ | |
-| `crop_mirror_normalize` | ☐ | |
-| `resize_mirror_normalize` | ☐ | |
-| `resize_crop_mirror` | ☐ | |
+| `crop` | ✅ | crop window from `dst_sizes` (anchored top-left) |
+| `crop_mirror_normalize` | ✅ | `offset`, `multiplier`, `mirror` (+ `dst_sizes`) |
+| `resize_mirror_normalize` | ✅ | `interpolation`, `mean`, `std_dev`, `mirror` (+ `dst_sizes`) |
+| `resize_crop_mirror` | ✅ | `interpolation`, `mirror` (+ `dst_sizes`) |
 | `remap` | ☐ | remap tables |
 | `lens_correction` | ☐ | remap tables + matrices |
 | `transpose` | ☐ | generic 3D descriptor |

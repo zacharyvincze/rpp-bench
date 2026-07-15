@@ -24,6 +24,8 @@
     { "name": "color_twist", "params": { "brightness": 1.5, "contrast": 1.2, "hue": 90, "saturation": 1.5 } },
     { "name": "color_jitter", "params": { "brightness": 1.5, "contrast": 1.2, "hue": 90, "saturation": 1.5 } },
     { "name": "histogram_equalize", "backends": ["HOST"] },
+    { "name": "color_cast", "params": { "r": 128, "g": 64, "b": 32, "alpha": 0.5 } },
+    { "name": "lut" },
 
     { "name": "vignette", "params": { "intensity": 6.0 } },
     { "name": "solarize", "params": { "threshold": 0.5 } },
@@ -38,6 +40,8 @@
     { "name": "gridmask", "params": { "tile_width": 40, "grid_ratio": 0.6 } },
     { "name": "spatter", "params": { "r": 65, "g": 42, "b": 20 } },
     { "name": "rain", "batch_sizes": [1, 8], "params": { "rain_percentage": 0.03, "rain_height": 15, "alpha": 0.5 } },
+    { "name": "glitch", "params": { "r_x": 8, "r_y": 8, "b_x": -8, "b_y": -8 } },
+    { "name": "erase" },
 
     { "name": "gaussian_blur", "params": { "kernel_size": 5, "std_dev": 1.5 } },
     { "name": "box_filter", "params": { "kernel_size": 5 } },
@@ -55,6 +59,10 @@
     { "name": "rotate", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
     { "name": "warp_affine", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
     { "name": "warp_perspective", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
+    { "name": "crop", "dst_sizes": [[112, 112], [160, 160]] },
+    { "name": "crop_mirror_normalize", "dst_sizes": [[112, 112]], "params": { "offset": 0.0, "multiplier": 1.0, "mirror": 1 } },
+    { "name": "resize_crop_mirror", "dst_sizes": [[112, 112], [960, 540]], "params": { "interpolation": "BILINEAR", "mirror": 1 } },
+    { "name": "resize_mirror_normalize", "dst_sizes": [[112, 112]], "params": { "interpolation": "BILINEAR", "mean": 0.0, "std_dev": 1.0, "mirror": 1 } },
     {
       "name": "resize",
       "dtypes": ["U8", "F32"],
