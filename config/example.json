@@ -13,12 +13,33 @@
 
   "ops": [
     { "name": "copy" },
+
     { "name": "brightness", "params": { "alpha": 1.75, "beta": 50 } },
     { "name": "gamma_correction", "params": { "gamma": 0.5 } },
     { "name": "contrast", "params": { "factor": 2.96, "center": 128 } },
     { "name": "exposure", "params": { "factor": 1.5 } },
+    { "name": "hue", "params": { "hue": 90 } },
+    { "name": "saturation", "params": { "saturation": 1.5 } },
+    { "name": "color_temperature", "params": { "adjustment": 40 } },
+    { "name": "color_twist", "params": { "brightness": 1.5, "contrast": 1.2, "hue": 90, "saturation": 1.5 } },
+    { "name": "color_jitter", "params": { "brightness": 1.5, "contrast": 1.2, "hue": 90, "saturation": 1.5 } },
+
     { "name": "vignette", "params": { "intensity": 6.0 } },
+    { "name": "solarize", "params": { "threshold": 0.5 } },
+    { "name": "posterize", "params": { "level_bits": 4 } },
+    { "name": "channel_dropout" },
+    { "name": "fog", "params": { "intensity": 0.4, "grey": 0.5 } },
+    { "name": "snow", "params": { "brightness_coefficient": 2.5, "threshold": 0.5, "dark_mode": 0 } },
+
     { "name": "gaussian_blur", "params": { "kernel_size": 5, "std_dev": 1.5 } },
+    { "name": "box_filter", "params": { "kernel_size": 5 } },
+    { "name": "median_filter", "params": { "kernel_size": 5 } },
+    { "name": "emboss", "params": { "kernel_size": 3, "strength": 1.0 } },
+    { "name": "sobel_filter", "layouts": ["PLN1"], "params": { "sobel_type": 0, "kernel_size": 3 } },
+
+    { "name": "erode", "params": { "kernel_size": 3 } },
+    { "name": "dilate", "params": { "kernel_size": 3 } },
+
     { "name": "flip", "params": { "horizontal": 1, "vertical": 0 } },
     {
       "name": "resize",

@@ -56,6 +56,11 @@ public:
     virtual std::vector<Layout> supportedLayouts() const {
         return {Layout::PKD3, Layout::PLN3, Layout::PLN1};
     }
+    // Restrict the sweep to backends the op actually implements. Defaults to
+    // both; ops with a GPU-only kernel (e.g. erode/dilate) narrow this to HIP.
+    virtual std::vector<RppBackend> supportedBackends() const {
+        return {RppBackend::RPP_HOST_BACKEND, RppBackend::RPP_HIP_BACKEND};
+    }
 
     // Source-buffer halo padding the op requires (HIP filter kernels need a
     // leading offset of 12*(kernelSize/2) bytes plus kernelSize/2 halo columns).

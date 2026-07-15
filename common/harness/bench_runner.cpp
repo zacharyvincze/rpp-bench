@@ -24,6 +24,9 @@ bool supports(const std::vector<RpptDataType> &v, RpptDataType t) {
 bool supports(const std::vector<Layout> &v, Layout l) {
     return std::find(v.begin(), v.end(), l) != v.end();
 }
+bool supports(const std::vector<RppBackend> &v, RppBackend b) {
+    return std::find(v.begin(), v.end(), b) != v.end();
+}
 
 // Expensive per-case resources (handle, stream, buffers, adapter). Google
 // Benchmark determines a case's iteration count by re-invoking its function
@@ -189,6 +192,7 @@ int register_benchmarks(const BenchConfig &cfg, std::vector<std::string> *names)
         auto probe = factory(); // query supported dtypes/layouts
         const auto dtypesOk = probe->supportedDtypes();
         const auto layoutsOk = probe->supportedLayouts();
+        const auto backendsOk = probe->supportedBackends();
 
         // dst sizes: use configured list, else a single "same as source" sentinel.
         std::vector<std::pair<int, int>> dsts = op.dstSizes;
@@ -196,6 +200,11 @@ int register_benchmarks(const BenchConfig &cfg, std::vector<std::string> *names)
 
         for (const auto &backend : op.matrix.backends) {
             RppBackend rppBackend = parse_backend(backend);
+            if (!supports(backendsOk, rppBackend)) {
+                std::fprintf(stderr, "note: op '%s' has no %s implementation - skipping\n",
+                             op.name.c_str(), backend.c_str());
+                continue;
+            }
 #if !RPP_BENCH_HIP
             if (rppBackend == RppBackend::RPP_HIP_BACKEND) {
                 std::fprintf(stderr,

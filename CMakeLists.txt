@@ -104,7 +104,10 @@ if(rpp_BACKEND_TYPE STREQUAL "HIP")
     find_package(hip REQUIRED)
     find_package(rocrand REQUIRED)
     target_link_libraries(rpp_bench PRIVATE hip::host roc::rocrand)
-    target_compile_definitions(rpp_bench PRIVATE RPP_BENCH_HIP=1)
+    # GPU_SUPPORT gates RPP's GPU-capable, backend-dispatch API overloads in the
+    # installed headers (e.g. rppt_erode / rppt_dilate). It must match how the
+    # HIP RPP was built for those declarations to be visible.
+    target_compile_definitions(rpp_bench PRIVATE RPP_BENCH_HIP=1 GPU_SUPPORT=1)
 else()
     target_compile_definitions(rpp_bench PRIVATE RPP_BENCH_HIP=0)
 endif()
