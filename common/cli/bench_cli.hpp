@@ -28,6 +28,11 @@ bool has_flag_named(int argc, char **argv, const char *name);
 // Returns whether it was present.
 bool strip_flag(int &argc, char **argv, const char *flag);
 
+// Pull "--progress[=MODE]" out of argv and return the requested display mode:
+// "" when the flag is absent, "simple" for a bare --progress (or an empty MODE),
+// otherwise MODE verbatim (e.g. "fancy"). Validation is left to the caller.
+std::string extract_progress(int &argc, char **argv);
+
 // Print detailed usage: this harness's own flags plus a quick reference to the
 // forwarded Google Benchmark flags. `prog` is argv[0].
 void print_help(const char *prog);

@@ -18,11 +18,14 @@
 
 #include "cli/bench_cli.hpp"
 #include "config/bench_config.hpp"
-#include "cli/bench_progress.hpp"
 #include "harness/bench_registry.hpp"
 #include "harness/bench_runner.hpp"
+#include "cli/progress/bench_progress.hpp"
+#include "cli/progress/bench_progress_dashboard.hpp"
+#include "cli/progress/bench_progress_simple.hpp"
 
 #include <cstdio>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -41,7 +44,12 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    const bool progress = strip_flag(argc, argv, "--progress");
+    const std::string progressMode = extract_progress(argc, argv);
+    if (!progressMode.empty() && progressMode != "simple" && progressMode != "fancy") {
+        std::fprintf(stderr, "error: unknown --progress mode '%s' (use 'simple' or 'fancy').\n",
+                     progressMode.c_str());
+        return 2;
+    }
 
     const std::string configPath = extract_config(argc, argv);
     if (configPath.empty()) {
@@ -85,13 +93,17 @@ int main(int argc, char **argv) {
     benchmark::Initialize(&argc, argv);
     if (benchmark::ReportUnrecognizedArguments(argc, argv))
         return 1;
-    if (progress) {
+    if (!progressMode.empty()) {
         // Count only the cases the active filter will actually run, so the
         // progress denominator is correct under --benchmark_filter.
         int toRun = count_matching(names, benchmark::GetBenchmarkFilter());
         // Custom display reporter; --benchmark_out (if any) still writes full JSON.
-        ProgressReporter reporter(toRun);
-        benchmark::RunSpecifiedBenchmarks(&reporter);
+        std::unique_ptr<benchmark::BenchmarkReporter> reporter;
+        if (progressMode == "fancy")
+            reporter = std::make_unique<DashboardProgressReporter>(toRun);
+        else
+            reporter = std::make_unique<SimpleProgressReporter>(toRun);
+        benchmark::RunSpecifiedBenchmarks(reporter.get());
     } else {
         benchmark::RunSpecifiedBenchmarks();
     }

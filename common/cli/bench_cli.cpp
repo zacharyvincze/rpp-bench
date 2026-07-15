@@ -61,6 +61,26 @@ bool strip_flag(int &argc, char **argv, const char *flag) {
     return found;
 }
 
+std::string extract_progress(int &argc, char **argv) {
+    std::string mode;
+    std::vector<char *> kept{argv[0]};
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--progress") == 0) {
+            mode = "simple";
+        } else if (std::strncmp(argv[i], "--progress=", 11) == 0) {
+            mode = argv[i] + 11;
+            if (mode.empty())
+                mode = "simple";
+        } else {
+            kept.push_back(argv[i]);
+        }
+    }
+    for (size_t i = 0; i < kept.size(); ++i)
+        argv[i] = kept[i];
+    argc = static_cast<int>(kept.size());
+    return mode;
+}
+
 // Detailed usage. Covers this harness's own flags plus a quick reference to the
 // Google Benchmark flags that are forwarded unchanged, so users don't have to
 // cross-check `--help` from a stock benchmark binary.
@@ -81,9 +101,13 @@ void print_help(const char *prog) {
                 "                         in config/: smoke.json (small/fast) and\n"
                 "                         example.json (fuller sweep).\n"
                 "  --list-ops             List the op adapters compiled in, then exit.\n"
-                "  --progress             Replace the per-benchmark result table with a\n"
-                "                         single self-updating progress line on stderr.\n"
-                "                         Honors the active --benchmark_filter; combine with\n"
+                "  --progress[=MODE]      Replace the per-benchmark result table with a\n"
+                "                         live progress display on stderr. MODE is 'simple'\n"
+                "                         (default: one self-updating line) or 'fancy' (a\n"
+                "                         bordered TTY dashboard with a gradient bar, ETA,\n"
+                "                         throughput, a timing sparkline, and a backend/dtype\n"
+                "                         tally; falls back to 'simple' off a TTY). Honors the\n"
+                "                         active --benchmark_filter; combine with\n"
                 "                         --benchmark_out to still capture full results.\n"
                 "  --help, -h             Show this help, then exit.\n"
                 "\n"
