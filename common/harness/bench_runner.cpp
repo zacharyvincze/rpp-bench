@@ -72,30 +72,35 @@ struct CaseResources {
         release();
         caseId = id;
         ctx = c;
-        adapter = factory();
-        src.init(ctx.backend, ctx.dtype, ctx.layout, ctx.batch, ctx.width, ctx.height,
-                 adapter->srcOffsetBytes(ctx), adapter->srcAdditionalStride(ctx));
-        dst.init(ctx.backend, ctx.dtype, ctx.layout, ctx.batch, ctx.dstWidth, ctx.dstHeight);
-        src.fill();
+        try {
+            adapter = factory();
+            src.init(ctx.backend, ctx.dtype, ctx.layout, ctx.batch, ctx.width, ctx.height,
+                     adapter->srcOffsetBytes(ctx), adapter->srcAdditionalStride(ctx));
+            dst.init(ctx.backend, ctx.dtype, ctx.layout, ctx.batch, ctx.dstWidth, ctx.dstHeight);
+            src.fill();
 
-        void *stream = nullptr;
+            void *stream = nullptr;
 #if RPP_BENCH_HIP
-        if (ctx.isHip) {
-            if (hipStreamCreate(&hipStream) != hipSuccess) {
+            if (ctx.isHip) {
+                if (hipStreamCreate(&hipStream) != hipSuccess) {
+                    failed = true;
+                    error = "hipStreamCreate failed";
+                    return;
+                }
+                stream = hipStream;
+            }
+#endif
+            if (rppCreate(&handle, ctx.batch, 0, stream, ctx.backend) != rppStatusSuccess) {
                 failed = true;
-                error = "hipStreamCreate failed";
+                error = "rppCreate failed";
                 return;
             }
-            stream = hipStream;
-        }
-#endif
-        if (rppCreate(&handle, ctx.batch, 0, stream, ctx.backend) != rppStatusSuccess) {
+            adapter->setup(ctx, src, dst);
+            ready = true;
+        } catch (const std::exception &e) {
             failed = true;
-            error = "rppCreate failed";
-            return;
+            error = std::string("case setup failed: ") + e.what();
         }
-        adapter->setup(ctx, src, dst);
-        ready = true;
     }
 };
 

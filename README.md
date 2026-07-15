@@ -195,7 +195,7 @@ Flow: `bench_main.cpp` loads a `BenchConfig` → `register_benchmarks()` expands
 
 ## Operators
 
-25 RPP tensor operators currently have adapters. The tables below track coverage by RPP category — ✅ ops are implemented and available in a config's `name` field, ☐ ops are a contribution roadmap (see [Adding an op](#adding-an-op)). The notes column lists config params and any sweep constraints an adapter imposes via its `supported*()` overrides.
+38 RPP tensor operators currently have adapters. The tables below track coverage by RPP category — ✅ ops are implemented and available in a config's `name` field, ☐ ops are a contribution roadmap (see [Adding an op](#adding-an-op)). The notes column lists config params and any sweep constraints an adapter imposes via its `supported*()` overrides.
 
 ### Color augmentations
 
@@ -210,10 +210,10 @@ Flow: `bench_main.cpp` loads a `BenchConfig` → `register_benchmarks()` expands
 | `color_temperature` | ✅ | `adjustment` |
 | `color_twist` | ✅ | `brightness`, `contrast`, `hue`, `saturation` |
 | `color_jitter` | ✅ | `brightness`, `contrast`, `hue`, `saturation` |
+| `histogram_equalize` | ✅ | no params — U8 only; HOST only (HIP kernel leaks an internal scratch buffer) |
 | `blend` | ☐ | two-source |
 | `color_cast` | ☐ | `RpptRGB` struct param |
 | `lut` | ☐ | 65536-entry lookup buffer |
-| `histogram_equalize` | ☐ | no params |
 
 ### Effects augmentations
 
@@ -225,18 +225,18 @@ Flow: `bench_main.cpp` loads a `BenchConfig` → `register_benchmarks()` expands
 | `channel_dropout` | ✅ | per-channel keep/drop mask |
 | `fog` | ✅ | `intensity`, `grey` |
 | `snow` | ✅ | `brightness_coefficient`, `threshold`, `dark_mode` |
-| `gaussian_noise` | ☐ | RNG seed |
-| `shot_noise` | ☐ | RNG seed |
-| `salt_and_pepper_noise` | ☐ | RNG seed |
-| `jitter` | ☐ | RNG seed |
-| `gridmask` | ☐ | |
-| `spatter` | ☐ | `RpptRGB` struct param |
+| `gaussian_noise` | ✅ | `mean`, `std_dev`, `seed` |
+| `shot_noise` | ✅ | `factor`, `seed` |
+| `salt_and_pepper_noise` | ✅ | `noise_probability`, `salt_probability`, `salt_value`, `pepper_value`, `seed` |
+| `jitter` | ✅ | `kernel_size`, `seed` |
+| `gridmask` | ✅ | `tile_width`, `grid_ratio`, `grid_angle`, `translate_x`, `translate_y` |
+| `spatter` | ✅ | `r`, `g`, `b` (RpptRGB by value) — RGB only (PKD3/PLN3) |
+| `rain` | ✅ | `rain_percentage`, `rain_width`, `rain_height`, `slant_angle`, `alpha` — stages via RPP host scratch (~0.4 GB × batch); keep batch modest on low-RAM hosts |
 | `non_linear_blend` | ☐ | two-source |
 | `water` | ☐ | |
 | `ricap` | ☐ | |
 | `erase` | ☐ | anchor boxes + colors |
 | `glitch` | ☐ | `RpptChannelOffsets` param |
-| `rain` | ☐ | |
 | `pixelate` | ☐ | external scratch buffer |
 | `cutout_dropout` | ☐ | |
 | `grid_dropout` | ☐ | |
@@ -267,11 +267,11 @@ Flow: `bench_main.cpp` loads a `BenchConfig` → `register_benchmarks()` expands
 |---|:--:|---|
 | `flip` | ✅ | `horizontal`, `vertical` |
 | `resize` | ✅ | `interpolation` (+ `dst_sizes`) |
+| `rotate` | ✅ | `angle`, `interpolation` |
+| `warp_affine` | ✅ | `angle`, `interpolation` — rotation affine built from `angle` |
+| `warp_perspective` | ✅ | `angle`, `interpolation` — rotation homography built from `angle` |
 | `crop` | ☐ | |
 | `crop_mirror_normalize` | ☐ | |
-| `warp_affine` | ☐ | 2×3 affine matrix |
-| `warp_perspective` | ☐ | 3×3 matrix |
-| `rotate` | ☐ | `angle` |
 | `resize_mirror_normalize` | ☐ | |
 | `resize_crop_mirror` | ☐ | |
 | `remap` | ☐ | remap tables |
@@ -290,7 +290,7 @@ Flow: `bench_main.cpp` loads a `BenchConfig` → `register_benchmarks()` expands
 | Operator | Done | Params / notes |
 |---|:--:|---|
 | `copy` | ✅ | no params; memory-bandwidth baseline |
-| `channel_permute` | ☐ | |
+| `channel_permute` | ✅ | `perm0`, `perm1`, `perm2` — RGB only (PKD3/PLN3) |
 | `color_to_greyscale` | ☐ | dst is 1-channel |
 | `yuv_to_rgb` | ☐ | separate Y/UV planes |
 | `yuv_to_rgb_cubic_v` | ☐ | separate Y/UV planes |
@@ -332,10 +332,10 @@ Output is a reduction (stats array), not a dst image — needs harness support f
 
 | Operator | Done | Params / notes |
 |---|:--:|---|
-| `bitwise_and` | ☐ | |
-| `bitwise_or` | ☐ | |
-| `bitwise_xor` | ☐ | |
-| `bitwise_not` | ☐ | |
+| `bitwise_not` | ✅ | no params — U8 only |
+| `bitwise_and` | ☐ | two-source |
+| `bitwise_or` | ☐ | two-source |
+| `bitwise_xor` | ☐ | two-source |
 | `tensor_and_tensor` | ☐ | two-source |
 | `tensor_or_tensor` | ☐ | two-source |
 | `tensor_xor_tensor` | ☐ | two-source |

@@ -23,6 +23,7 @@
     { "name": "color_temperature", "params": { "adjustment": 40 } },
     { "name": "color_twist", "params": { "brightness": 1.5, "contrast": 1.2, "hue": 90, "saturation": 1.5 } },
     { "name": "color_jitter", "params": { "brightness": 1.5, "contrast": 1.2, "hue": 90, "saturation": 1.5 } },
+    { "name": "histogram_equalize", "backends": ["HOST"] },
 
     { "name": "vignette", "params": { "intensity": 6.0 } },
     { "name": "solarize", "params": { "threshold": 0.5 } },
@@ -30,6 +31,13 @@
     { "name": "channel_dropout" },
     { "name": "fog", "params": { "intensity": 0.4, "grey": 0.5 } },
     { "name": "snow", "params": { "brightness_coefficient": 2.5, "threshold": 0.5, "dark_mode": 0 } },
+    { "name": "gaussian_noise", "params": { "mean": 0.0, "std_dev": 0.2, "seed": 0 } },
+    { "name": "shot_noise", "params": { "factor": 80.0, "seed": 0 } },
+    { "name": "salt_and_pepper_noise", "params": { "noise_probability": 0.1, "salt_probability": 0.5, "seed": 0 } },
+    { "name": "jitter", "params": { "kernel_size": 3, "seed": 0 } },
+    { "name": "gridmask", "params": { "tile_width": 40, "grid_ratio": 0.6 } },
+    { "name": "spatter", "params": { "r": 65, "g": 42, "b": 20 } },
+    { "name": "rain", "batch_sizes": [1, 8], "params": { "rain_percentage": 0.03, "rain_height": 15, "alpha": 0.5 } },
 
     { "name": "gaussian_blur", "params": { "kernel_size": 5, "std_dev": 1.5 } },
     { "name": "box_filter", "params": { "kernel_size": 5 } },
@@ -40,7 +48,13 @@
     { "name": "erode", "params": { "kernel_size": 3 } },
     { "name": "dilate", "params": { "kernel_size": 3 } },
 
+    { "name": "bitwise_not" },
+    { "name": "channel_permute", "params": { "perm0": 2, "perm1": 1, "perm2": 0 } },
+
     { "name": "flip", "params": { "horizontal": 1, "vertical": 0 } },
+    { "name": "rotate", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
+    { "name": "warp_affine", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
+    { "name": "warp_perspective", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
     {
       "name": "resize",
       "dtypes": ["U8", "F32"],
