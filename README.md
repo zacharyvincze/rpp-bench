@@ -7,6 +7,7 @@ Config-driven micro-benchmarks for [RPP](https://github.com/ROCm/rpp) (ROCm Perf
 ## Index
 
 - [Requirements](#requirements)
+- [Quick Start](#quick-start)
 - [Build](#build)
 - [Run](#run)
 - [Filtering benchmarks](#filtering-benchmarks)
