@@ -14,7 +14,7 @@
 
 namespace rppbench {
 
-class ShotNoiseAdapter : public OpAdapter {
+class ShotNoiseAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         isHip_ = ctx.isHip;

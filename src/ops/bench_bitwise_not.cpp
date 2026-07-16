@@ -14,7 +14,7 @@
 
 namespace rppbench {
 
-class BitwiseNotAdapter : public OpAdapter {
+class BitwiseNotAdapter : public SimpleOpAdapter {
 public:
     std::vector<RpptDataType> supportedDtypes() const override { return {RpptDataType::U8}; }
 

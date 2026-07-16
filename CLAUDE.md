@@ -45,8 +45,8 @@ The harness lives in `common/`, grouped by role into four subdirectories. Header
 - **`bench_enums.hpp`** — the single source of truth for string↔RPP-enum mapping (dtype, layout, backend, interpolation). Config parsing, name encoding, and adapters all go through it.
 
 `common/harness/`
-- **`bench_registry.hpp`** — the `OpAdapter` interface, the `BenchContext` (one fully-resolved sweep point), and the global `OpRegistry` singleton.
-- **`bench_tensor.*`** — `TensorBuffer`: descriptor/stride/ROI setup and HIP-aware allocation, so adapters get ready-to-use src/dst and only build their own param tensors. HIP inputs are filled directly in device memory via rocRAND (no H2D copy).
+- **`bench_registry.hpp`** — the `OpAdapter` interface, the `BenchContext` (one fully-resolved sweep point), and the global `OpRegistry` singleton. Adapters receive `std::vector<TensorBuffer>` for sources and destinations and declare how many of each they need via `numSrc()`/`numDst()` (default 1 each). `SimpleOpAdapter` is a convenience base for the common one-in/one-out op: it forwards the vector forms to single-buffer `setup(ctx, src, dst)` / `run(ctx, src, dst, handle)` signatures, so single-source adapters never touch the vectors. Multi-source ops (e.g. `bitwise_and`) subclass `OpAdapter` directly and override `numSrc()`.
+- **`bench_tensor.*`** — `TensorBuffer`: descriptor/stride/ROI setup and HIP-aware allocation, so adapters get ready-to-use src/dst and only build their own param tensors. HIP inputs are filled directly in device memory via rocRAND (no H2D copy). Multiple sources all share dims/dtype/layout (matching the single `srcDesc` the two-source `rppt_*` calls take) and are each filled independently.
 - **`bench_runner.cpp`** — the cartesian expansion (nested loops over backend/dtype/layout/batch/size/dst/paramSet), skipping combos an adapter doesn't support or a backend not compiled in. Also owns `run_case()` (the timed body).
 - **`bench_name.*`** — `encode_name()`, the benchmark-name encoding (its own file because it's a contract with `scripts/json2csv.py`).
 
@@ -71,7 +71,7 @@ The harness lives in `common/`, grouped by role into four subdirectories. Header
 
 Each `rppt_*` function has a distinct C signature, so each op needs a small adapter under `src/ops/bench_<name>.cpp`:
 
-1. Subclass `OpAdapter` (see `common/harness/bench_registry.hpp`).
+1. Subclass `SimpleOpAdapter` for a one-source/one-destination op (see `common/harness/bench_registry.hpp`); subclass `OpAdapter` directly and override `numSrc()`/`numDst()` for a multi-source/destination op (see `src/ops/bench_bitwise_and.cpp` for the two-source pattern).
 2. In `setup()` allocate op-specific param tensors with `bench_pinned_alloc` (so they work on HIP); issue the `rppt_*` call in `run()`; free in `teardown()`. Read config params via `ctx.param<T>("key", fallback)`.
 3. Optionally override `supportedDtypes()` / `supportedLayouts()` to constrain the sweep, and `srcOffsetBytes()` / `srcAdditionalStride()` for filter ops that need halo padding on the source buffer.
 4. `REGISTER_RPP_BENCH("config_name", AdapterClass)` at file scope.

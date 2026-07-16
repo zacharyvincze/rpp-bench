@@ -14,7 +14,7 @@
 
 namespace rppbench {
 
-class ChannelPermuteAdapter : public OpAdapter {
+class ChannelPermuteAdapter : public SimpleOpAdapter {
 public:
     std::vector<Layout> supportedLayouts() const override { return {Layout::PKD3, Layout::PLN3}; }
 

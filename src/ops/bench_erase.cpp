@@ -18,7 +18,7 @@
 
 namespace rppbench {
 
-class EraseAdapter : public OpAdapter {
+class EraseAdapter : public SimpleOpAdapter {
 public:
     std::vector<Layout> supportedLayouts() const override { return {Layout::PKD3, Layout::PLN3}; }
 

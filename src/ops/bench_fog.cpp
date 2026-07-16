@@ -11,7 +11,7 @@
 
 namespace rppbench {
 
-class FogAdapter : public OpAdapter {
+class FogAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         isHip_ = ctx.isHip;

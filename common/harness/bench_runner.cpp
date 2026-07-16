@@ -42,7 +42,7 @@ struct CaseResources {
 
     BenchContext ctx;
     std::unique_ptr<OpAdapter> adapter;
-    TensorBuffer src, dst;
+    std::vector<TensorBuffer> srcs, dsts;
     rppHandle_t handle = nullptr;
 #if RPP_BENCH_HIP
     hipStream_t hipStream = nullptr;
@@ -52,8 +52,12 @@ struct CaseResources {
         if (adapter && ready)
             adapter->teardown();
         adapter.reset();
-        src.free();
-        dst.free();
+        for (auto &s : srcs)
+            s.free();
+        for (auto &d : dsts)
+            d.free();
+        srcs.clear();
+        dsts.clear();
         if (handle) {
             rppDestroy(handle, ctx.backend);
             handle = nullptr;
@@ -74,10 +78,18 @@ struct CaseResources {
         ctx = c;
         try {
             adapter = factory();
-            src.init(ctx.backend, ctx.dtype, ctx.layout, ctx.batch, ctx.width, ctx.height,
-                     adapter->srcOffsetBytes(ctx), adapter->srcAdditionalStride(ctx));
-            dst.init(ctx.backend, ctx.dtype, ctx.layout, ctx.batch, ctx.dstWidth, ctx.dstHeight);
-            src.fill();
+            // Every source shares dims/dtype/layout (the two-source rppt_* calls
+            // take a single srcDesc); each is filled independently. Destinations
+            // use the (possibly resized) dst dims.
+            srcs.resize(std::max(1, adapter->numSrc()));
+            dsts.resize(std::max(1, adapter->numDst()));
+            for (auto &s : srcs) {
+                s.init(ctx.backend, ctx.dtype, ctx.layout, ctx.batch, ctx.width, ctx.height,
+                       adapter->srcOffsetBytes(ctx), adapter->srcAdditionalStride(ctx));
+                s.fill();
+            }
+            for (auto &d : dsts)
+                d.init(ctx.backend, ctx.dtype, ctx.layout, ctx.batch, ctx.dstWidth, ctx.dstHeight);
 
             void *stream = nullptr;
 #if RPP_BENCH_HIP
@@ -95,7 +107,7 @@ struct CaseResources {
                 error = "rppCreate failed";
                 return;
             }
-            adapter->setup(ctx, src, dst);
+            adapter->setup(ctx, srcs, dsts);
             ready = true;
         } catch (const std::exception &e) {
             failed = true;
@@ -115,16 +127,19 @@ CaseResources g_case;
  * On HIP it synchronizes so the kernel has actually finished. Shared verbatim by
  * the warmup and timed loops so warmup exercises exactly what is measured.
  * @param ctx The fully-resolved sweep point.
- * @param src Source buffer.
- * @param dst Destination buffer.
+ * @param srcs Source buffers.
+ * @param dsts Destination buffers.
  * @return An error string on failure, empty on success.
  */
-std::string run_one(const BenchContext &ctx, TensorBuffer &src, TensorBuffer &dst) {
+std::string run_one(const BenchContext &ctx, std::vector<TensorBuffer> &srcs,
+                    std::vector<TensorBuffer> &dsts) {
     // Some ops convert the ROI in place; refresh it each call so repeated
     // invocations don't accumulate and drive indices out of bounds.
-    src.resetRoi();
-    dst.resetRoi();
-    RppStatus st = g_case.adapter->run(ctx, src, dst, g_case.handle);
+    for (auto &s : srcs)
+        s.resetRoi();
+    for (auto &d : dsts)
+        d.resetRoi();
+    RppStatus st = g_case.adapter->run(ctx, srcs, dsts, g_case.handle);
 #if RPP_BENCH_HIP
     if (ctx.isHip) {
         // The rppt_* launch is async; a kernel fault surfaces here. Capture it
@@ -156,14 +171,14 @@ void run_case(benchmark::State &state, int caseId, const AdapterFactory &factory
         return;
     }
 
-    TensorBuffer &src = g_case.src;
-    TensorBuffer &dst = g_case.dst;
+    std::vector<TensorBuffer> &srcs = g_case.srcs;
+    std::vector<TensorBuffer> &dsts = g_case.dsts;
 
     // Untimed warmup, run once per case (before the calibration ramp's first
     // measured invocation) to reach steady clocks / paged-in buffers.
     if (!g_case.warmed) {
         for (int i = 0; i < warmupIters; ++i) {
-            std::string err = run_one(ctx, src, dst);
+            std::string err = run_one(ctx, srcs, dsts);
             if (!err.empty()) {
                 state.SkipWithError(err);
                 return;
@@ -174,7 +189,7 @@ void run_case(benchmark::State &state, int caseId, const AdapterFactory &factory
 
     for (auto _ : state) {
         (void)_; // benchmark loop sentinel; body work is what's timed
-        std::string err = run_one(ctx, src, dst);
+        std::string err = run_one(ctx, srcs, dsts);
         if (!err.empty()) {
             state.SkipWithError(err);
             break;
@@ -188,7 +203,7 @@ void run_case(benchmark::State &state, int caseId, const AdapterFactory &factory
     state.counters["pixels_per_sec"] =
         benchmark::Counter(pixels, benchmark::Counter::kIsIterationInvariantRate);
     state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) *
-                            static_cast<int64_t>(src.dataBytes));
+                            static_cast<int64_t>(srcs[0].dataBytes));
 }
 
 } // namespace

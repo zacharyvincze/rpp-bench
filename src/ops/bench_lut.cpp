@@ -17,7 +17,7 @@
 
 namespace rppbench {
 
-class LutAdapter : public OpAdapter {
+class LutAdapter : public SimpleOpAdapter {
 public:
     std::vector<RpptDataType> supportedDtypes() const override {
         return {RpptDataType::U8, RpptDataType::I8};

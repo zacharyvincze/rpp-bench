@@ -14,7 +14,7 @@
 
 namespace rppbench {
 
-class GridmaskAdapter : public OpAdapter {
+class GridmaskAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         tileWidth_ = static_cast<Rpp32u>(ctx.param<int>("tile_width", 40));

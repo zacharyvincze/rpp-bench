@@ -13,7 +13,7 @@
 
 namespace rppbench {
 
-class CopyAdapter : public OpAdapter {
+class CopyAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &, TensorBuffer &, TensorBuffer &) override {}
 

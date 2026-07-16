@@ -13,7 +13,7 @@
 
 namespace rppbench {
 
-class PosterizeAdapter : public OpAdapter {
+class PosterizeAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         isHip_ = ctx.isHip;

@@ -11,7 +11,7 @@
 
 namespace rppbench {
 
-class VignetteAdapter : public OpAdapter {
+class VignetteAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         isHip_ = ctx.isHip;

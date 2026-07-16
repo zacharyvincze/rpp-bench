@@ -14,7 +14,7 @@
 
 namespace rppbench {
 
-class SolarizeAdapter : public OpAdapter {
+class SolarizeAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         isHip_ = ctx.isHip;

@@ -15,7 +15,7 @@
 
 namespace rppbench {
 
-class ErodeAdapter : public OpAdapter {
+class ErodeAdapter : public SimpleOpAdapter {
 public:
     // No HOST kernel in the installed RPP (the API is gated behind GPU_SUPPORT);
     // HOST calls return RPP_ERROR_NOT_IMPLEMENTED, so keep this HIP-only.

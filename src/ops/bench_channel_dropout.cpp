@@ -15,7 +15,7 @@
 
 namespace rppbench {
 
-class ChannelDropoutAdapter : public OpAdapter {
+class ChannelDropoutAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         isHip_ = ctx.isHip;

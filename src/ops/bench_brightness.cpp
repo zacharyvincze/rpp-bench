@@ -11,7 +11,7 @@
 
 namespace rppbench {
 
-class BrightnessAdapter : public OpAdapter {
+class BrightnessAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         const auto alpha = ctx.param<float>("alpha", 1.75F);

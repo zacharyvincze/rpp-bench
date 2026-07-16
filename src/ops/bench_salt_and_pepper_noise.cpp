@@ -15,7 +15,7 @@
 
 namespace rppbench {
 
-class SaltAndPepperNoiseAdapter : public OpAdapter {
+class SaltAndPepperNoiseAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         isHip_ = ctx.isHip;

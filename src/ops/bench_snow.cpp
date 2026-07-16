@@ -13,7 +13,7 @@
 
 namespace rppbench {
 
-class SnowAdapter : public OpAdapter {
+class SnowAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         isHip_ = ctx.isHip;

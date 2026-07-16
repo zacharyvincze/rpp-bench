@@ -15,7 +15,7 @@
 
 namespace rppbench {
 
-class MedianFilterAdapter : public OpAdapter {
+class MedianFilterAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         kernelSize_ = static_cast<Rpp32u>(ctx.param<int>("kernel_size", 3));

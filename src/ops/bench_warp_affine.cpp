@@ -17,7 +17,7 @@
 
 namespace rppbench {
 
-class WarpAffineAdapter : public OpAdapter {
+class WarpAffineAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         isHip_ = ctx.isHip;

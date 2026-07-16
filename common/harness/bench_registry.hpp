@@ -96,18 +96,78 @@ public:
     virtual int srcAdditionalStride(const BenchContext &) const { return 0; }
 
     /**
+     * @brief How many source buffers the runner should allocate for this op.
+     *
+     * Most ops read one image; two-source ops (blend, bitwise_and, magnitude, ...)
+     * return >1. Every source is allocated with identical dims/dtype/layout and
+     * filled independently, and they share one descriptor/ROI (which is what the
+     * two-source rppt_* signatures expect). Defaults to 1.
+     * @return Source buffer count (>= 1).
+     */
+    virtual int numSrc() const { return 1; }
+    /**
+     * @brief How many destination buffers the runner should allocate for this op.
+     * @return Destination buffer count (>= 1).
+     */
+    virtual int numDst() const { return 1; }
+
+    /**
      * @brief Allocate op-specific param tensors. Called once, outside the timing loop.
      * @param ctx The fully-resolved sweep point.
-     * @param src Ready-to-use source buffer.
-     * @param dst Ready-to-use destination buffer.
+     * @param src Ready-to-use source buffers (size == numSrc()).
+     * @param dst Ready-to-use destination buffers (size == numDst()).
      */
-    virtual void setup(const BenchContext &ctx, TensorBuffer &src, TensorBuffer &dst) = 0;
+    virtual void setup(const BenchContext &ctx, std::vector<TensorBuffer> &src,
+                       std::vector<TensorBuffer> &dst) = 0;
 
     /**
      * @brief The hot path - issues the rppt_* call. Timed.
      *
      * For HIP the runner synchronizes the stream after each call, so run() need
      * only enqueue.
+     * @param ctx The fully-resolved sweep point.
+     * @param src Source buffers (size == numSrc()).
+     * @param dst Destination buffers (size == numDst()).
+     * @param handle The RPP handle to issue the call against.
+     * @return The rppt_* call's status.
+     */
+    virtual RppStatus run(const BenchContext &ctx, std::vector<TensorBuffer> &src,
+                          std::vector<TensorBuffer> &dst, rppHandle_t handle) = 0;
+
+    /**
+     * @brief Free op-specific param tensors. Called once, after the timing loop.
+     */
+    virtual void teardown() {}
+};
+
+/**
+ * @brief Base for the common single-source, single-destination op.
+ *
+ * Forwards the collection-based setup()/run() to the single-buffer signatures
+ * the vast majority of adapters use, so those adapters need only inherit this
+ * instead of OpAdapter. Multi-source/destination ops subclass OpAdapter directly
+ * and override numSrc()/numDst() plus the collection forms.
+ */
+class SimpleOpAdapter : public OpAdapter {
+public:
+    void setup(const BenchContext &ctx, std::vector<TensorBuffer> &src,
+               std::vector<TensorBuffer> &dst) final {
+        setup(ctx, src[0], dst[0]);
+    }
+    RppStatus run(const BenchContext &ctx, std::vector<TensorBuffer> &src,
+                  std::vector<TensorBuffer> &dst, rppHandle_t handle) final {
+        return run(ctx, src[0], dst[0], handle);
+    }
+
+    /**
+     * @brief Allocate op-specific param tensors. Called once, outside the timing loop.
+     * @param ctx The fully-resolved sweep point.
+     * @param src Ready-to-use source buffer.
+     * @param dst Ready-to-use destination buffer.
+     */
+    virtual void setup(const BenchContext &ctx, TensorBuffer &src, TensorBuffer &dst) = 0;
+    /**
+     * @brief The hot path - issues the rppt_* call. Timed. See OpAdapter::run.
      * @param ctx The fully-resolved sweep point.
      * @param src Source buffer.
      * @param dst Destination buffer.
@@ -116,11 +176,6 @@ public:
      */
     virtual RppStatus run(const BenchContext &ctx, TensorBuffer &src, TensorBuffer &dst,
                           rppHandle_t handle) = 0;
-
-    /**
-     * @brief Free op-specific param tensors. Called once, after the timing loop.
-     */
-    virtual void teardown() {}
 };
 
 using AdapterFactory = std::function<std::unique_ptr<OpAdapter>()>;

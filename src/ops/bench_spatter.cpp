@@ -14,7 +14,7 @@
 
 namespace rppbench {
 
-class SpatterAdapter : public OpAdapter {
+class SpatterAdapter : public SimpleOpAdapter {
 public:
     std::vector<Layout> supportedLayouts() const override { return {Layout::PKD3, Layout::PLN3}; }
 

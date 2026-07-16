@@ -14,7 +14,7 @@
 
 namespace rppbench {
 
-class JitterAdapter : public OpAdapter {
+class JitterAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         isHip_ = ctx.isHip;

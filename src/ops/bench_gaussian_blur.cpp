@@ -11,7 +11,7 @@
 
 namespace rppbench {
 
-class GaussianBlurAdapter : public OpAdapter {
+class GaussianBlurAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         isHip_ = ctx.isHip;

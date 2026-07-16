@@ -13,7 +13,7 @@
 
 namespace rppbench {
 
-class GlitchAdapter : public OpAdapter {
+class GlitchAdapter : public SimpleOpAdapter {
 public:
     std::vector<Layout> supportedLayouts() const override { return {Layout::PKD3, Layout::PLN3}; }
 

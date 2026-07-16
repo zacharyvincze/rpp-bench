@@ -18,7 +18,7 @@
 
 namespace rppbench {
 
-class CropMirrorNormalizeAdapter : public OpAdapter {
+class CropMirrorNormalizeAdapter : public SimpleOpAdapter {
 public:
     void setup(const BenchContext &ctx, TensorBuffer &, TensorBuffer &) override {
         isHip_ = ctx.isHip;

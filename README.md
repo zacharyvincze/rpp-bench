@@ -175,7 +175,7 @@ The active param set is encoded in the benchmark name as `.../params:k1=v1,k2=v2
 
 Each RPP op has a distinct C signature, so each needs a small adapter under `src/ops/bench_<name>.cpp`:
 
-1. Subclass `OpAdapter` (see [common/harness/bench_registry.hpp](common/harness/bench_registry.hpp)).
+1. For a one-source/one-destination op, subclass `SimpleOpAdapter` (see [common/harness/bench_registry.hpp](common/harness/bench_registry.hpp)); its `setup()`/`run()` take a single `src`/`dst`. For a multi-source or multi-destination op, subclass `OpAdapter` directly, override `numSrc()`/`numDst()`, and take `std::vector<TensorBuffer>&` for `src`/`dst` (see [src/ops/bench_bitwise_and.cpp](src/ops/bench_bitwise_and.cpp) for the two-source pattern — all sources share one descriptor/ROI).
 2. In `setup()` allocate any op-specific param tensors (use `bench_pinned_alloc` so they work on HIP); in `run()` call the `rppt_*` function; free in `teardown()`.
 3. Optionally override `supportedDtypes()` / `supportedLayouts()` / `supportedBackends()` to constrain the sweep (e.g. RGB-only or HIP-only ops), and, for filter-style ops, `srcOffsetBytes()` / `srcAdditionalStride()` to request the halo padding HIP kernels need.
 4. Register with `REGISTER_RPP_BENCH("config_name", AdapterClass)`.
@@ -274,7 +274,7 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 | Statistical | `normalize` | ☐ | |
 | Statistical | `threshold` | ☐ | |
 | Bitwise | `bitwise_not` | ✅ | no params — U8 only |
-| Bitwise | `bitwise_and` | ☐ | two-source |
+| Bitwise | `bitwise_and` | ✅ | two-source, no params — U8 only |
 | Bitwise | `bitwise_or` | ☐ | two-source |
 | Bitwise | `bitwise_xor` | ☐ | two-source |
 | Bitwise | `tensor_and_tensor` | ☐ | two-source |

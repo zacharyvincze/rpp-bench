@@ -53,6 +53,7 @@
     { "name": "dilate", "params": { "kernel_size": 3 } },
 
     { "name": "bitwise_not" },
+    { "name": "bitwise_and" },
     { "name": "channel_permute", "params": { "perm0": 2, "perm1": 1, "perm2": 0 } },
 
     { "name": "flip", "params": { "horizontal": 1, "vertical": 0 } },

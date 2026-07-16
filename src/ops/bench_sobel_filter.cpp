@@ -17,7 +17,7 @@
 
 namespace rppbench {
 
-class SobelFilterAdapter : public OpAdapter {
+class SobelFilterAdapter : public SimpleOpAdapter {
 public:
     std::vector<Layout> supportedLayouts() const override { return {Layout::PLN1}; }
 
