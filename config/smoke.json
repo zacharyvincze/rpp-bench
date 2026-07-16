@@ -41,6 +41,8 @@
     { "name": "rain", "params": { "rain_percentage": 0.03, "rain_height": 15, "alpha": 0.5 } },
     { "name": "bitwise_not" },
     { "name": "bitwise_and" },
+    { "name": "bitwise_or" },
+    { "name": "bitwise_xor" },
     { "name": "channel_permute", "params": { "perm0": 2, "perm1": 1, "perm2": 0 } },
     { "name": "color_cast", "params": { "r": 128, "g": 64, "b": 32, "alpha": 0.5 } },
     { "name": "lut" },

@@ -275,8 +275,8 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 | Statistical | `threshold` | ☐ | |
 | Bitwise | `bitwise_not` | ✅ | no params — U8 only |
 | Bitwise | `bitwise_and` | ✅ | two-source, no params — U8 only |
-| Bitwise | `bitwise_or` | ☐ | two-source |
-| Bitwise | `bitwise_xor` | ☐ | two-source |
+| Bitwise | `bitwise_or` | ✅ | two-source, no params — U8 only |
+| Bitwise | `bitwise_xor` | ✅ | two-source, no params — U8 only |
 | Bitwise | `tensor_and_tensor` | ☐ | two-source |
 | Bitwise | `tensor_or_tensor` | ☐ | two-source |
 | Bitwise | `tensor_xor_tensor` | ☐ | two-source |

@@ -54,6 +54,8 @@
 
     { "name": "bitwise_not" },
     { "name": "bitwise_and" },
+    { "name": "bitwise_or" },
+    { "name": "bitwise_xor" },
     { "name": "channel_permute", "params": { "perm0": 2, "perm1": 1, "perm2": 0 } },
 
     { "name": "flip", "params": { "horizontal": 1, "vertical": 0 } },
