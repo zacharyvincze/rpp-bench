@@ -4,8 +4,6 @@
 
 Config-driven micro-benchmarks for [RPP](https://github.com/ROCm/rpp) (ROCm Performance Primitives) operators, built on [Google Benchmark].
 
-The benchmark *matrix* — which ops, backends, datatypes, layouts, batch sizes, image sizes, and per-op params to sweep — is described in a JSON file and read at runtime, so exploring a new set of cases means editing a config, not recompiling. It's a standalone CMake project: it consumes an *installed* RPP via `find_package(rpp)` and fetches Google Benchmark + nlohmann/json at configure time.
-
 - [Requirements](#requirements)
 - [Build](#build)
 - [Run](#run)
@@ -32,13 +30,6 @@ Google Benchmark and nlohmann/json are fetched automatically at configure time �
 cmake -S . -B build            # uses $ROCM_PATH or /opt/rocm
 cmake --build build -j
 ```
-
-Useful configure options:
-
-- `-DROCM_PATH=/opt/rocm-x.y.z` — pick a specific ROCm.
-- `-Drpp_DIR=/path/to/lib/cmake/rpp` — point straight at the RPP package config.
-
-A HIP-enabled RPP can still run HOST benchmarks; a HOST-only build skips any `HIP` entries in the config with a note.
 
 ## Run
 
@@ -162,200 +153,6 @@ Any matrix axis set inside an op overrides the default for that op.
 
 The active param set is encoded in the benchmark name as `.../params:k1=v1,k2=v2`, so swept cases stay uniquely named and the values flow through to the JSON output and to the CSV's `params` column (comma-quoted). Reading a param in an adapter: `ctx.param<T>("key", fallback)`.
 
-## Project layout
-
-The harness lives in `common/`, grouped by role into three subdirectories; headers are included path-qualified from the `common/` root (e.g. `#include "harness/bench_registry.hpp"`). The op adapters and entry point live in `src/`.
-
-```
-common/
-  config/
-    bench_config.{hpp,cpp}    parse JSON into BenchConfig (globals + per-op OpSpec list)
-    bench_enums.hpp           single source of truth for string <-> RPP-enum mapping
-  harness/
-    bench_registry.{hpp,cpp}  OpAdapter interface, BenchContext, global OpRegistry singleton
-    bench_tensor.{hpp,cpp}    TensorBuffer: descriptor/stride/ROI setup + HIP-aware allocation
-    bench_runner.{hpp,cpp}    cartesian expansion of the matrix; owns the timed run_case()
-    bench_name.{hpp,cpp}      encode_name() — the benchmark-name contract with json2csv.py
-  cli/
-    bench_cli.{hpp,cpp}       pre-parse --config / --list-ops / --progress; --help text
-    bench_progress.{hpp,cpp}  the --progress live display and filter-aware case counter
-src/
-  bench_main.cpp              entry point; wires config -> registration -> run -> cleanup
-  ops/
-    bench_<name>.cpp          one adapter per op (self-registers via REGISTER_RPP_BENCH)
-config/
-  smoke.json                  tiny CI-friendly sweep (one quick combo per op)
-  example.json                fuller sweep across dtypes/layouts/batch/sizes
-scripts/
-  json2csv.py                 flatten results JSON into CSV (stdlib only)
-  plot_results.py             faceted small-multiples figure (needs matplotlib + numpy)
-```
-
-Flow: `bench_main.cpp` loads a `BenchConfig` → `register_benchmarks()` expands the matrix (ops × backends × dtypes × layouts × batch × sizes × params) and registers one Google Benchmark per combo → Google Benchmark runs them → `release_active_resources()` frees the last live case.
-
-## Operators
-
-46 RPP tensor operators currently have adapters. The tables below track coverage by RPP category — ✅ ops are implemented and available in a config's `name` field, ☐ ops are a contribution roadmap (see [Adding an op](#adding-an-op)). The notes column lists config params and any sweep constraints an adapter imposes via its `supported*()` overrides.
-
-### Color augmentations
-
-| Operator | Done | Params / notes |
-|---|:--:|---|
-| `brightness` | ✅ | `alpha`, `beta` |
-| `gamma_correction` | ✅ | `gamma` |
-| `contrast` | ✅ | `factor`, `center` |
-| `exposure` | ✅ | `factor` |
-| `hue` | ✅ | `hue` — RGB only (PKD3/PLN3) |
-| `saturation` | ✅ | `saturation` — RGB only (PKD3/PLN3) |
-| `color_temperature` | ✅ | `adjustment` |
-| `color_twist` | ✅ | `brightness`, `contrast`, `hue`, `saturation` |
-| `color_jitter` | ✅ | `brightness`, `contrast`, `hue`, `saturation` |
-| `histogram_equalize` | ✅ | no params — U8 only; HOST only (HIP kernel leaks an internal scratch buffer) |
-| `color_cast` | ✅ | `r`, `g`, `b`, `alpha` — RGB only (PKD3/PLN3) |
-| `lut` | ✅ | identity 65536-entry table — U8/I8 only |
-| `blend` | ☐ | two-source |
-
-### Effects augmentations
-
-| Operator | Done | Params / notes |
-|---|:--:|---|
-| `vignette` | ✅ | `intensity` |
-| `solarize` | ✅ | `threshold` |
-| `posterize` | ✅ | `level_bits` |
-| `channel_dropout` | ✅ | per-channel keep/drop mask |
-| `fog` | ✅ | `intensity`, `grey` |
-| `snow` | ✅ | `brightness_coefficient`, `threshold`, `dark_mode` |
-| `gaussian_noise` | ✅ | `mean`, `std_dev`, `seed` |
-| `shot_noise` | ✅ | `factor`, `seed` |
-| `salt_and_pepper_noise` | ✅ | `noise_probability`, `salt_probability`, `salt_value`, `pepper_value`, `seed` |
-| `jitter` | ✅ | `kernel_size`, `seed` |
-| `gridmask` | ✅ | `tile_width`, `grid_ratio`, `grid_angle`, `translate_x`, `translate_y` |
-| `spatter` | ✅ | `r`, `g`, `b` (RpptRGB by value) — RGB only (PKD3/PLN3) |
-| `rain` | ✅ | `rain_percentage`, `rain_width`, `rain_height`, `slant_angle`, `alpha` — stages via RPP host scratch (~0.4 GB × batch); keep batch modest on low-RAM hosts |
-| `erase` | ✅ | one centred box/image, RGB colour — 3-channel only |
-| `glitch` | ✅ | `r_x`/`r_y`/`g_x`/`g_y`/`b_x`/`b_y` channel offsets — 3-channel only |
-| `non_linear_blend` | ☐ | two-source |
-| `water` | ☐ | |
-| `ricap` | ☐ | |
-| `pixelate` | ☐ | external scratch buffer |
-| `cutout_dropout` | ☐ | |
-| `grid_dropout` | ☐ | |
-| `random_erase` | ☐ | |
-| `coarse_dropout` | ☐ | |
-| `gaussian_noise_voxel` | ☐ | generic 3D descriptor |
-
-### Filter augmentations — fully covered
-
-| Operator | Done | Params / notes |
-|---|:--:|---|
-| `gaussian_blur` | ✅ | `kernel_size`, `std_dev` — maps to `rppt_gaussian_filter` |
-| `box_filter` | ✅ | `kernel_size` |
-| `median_filter` | ✅ | `kernel_size` |
-| `emboss` | ✅ | `kernel_size`, `strength` |
-| `sobel_filter` | ✅ | `sobel_type`, `kernel_size` — single-channel (PLN1); dst is 1-channel |
-
-### Morphological operations
-
-| Operator | Done | Params / notes |
-|---|:--:|---|
-| `erode` | ✅ | `kernel_size` — HIP only |
-| `dilate` | ✅ | `kernel_size` — HIP only |
-
-### Geometric augmentations
-
-| Operator | Done | Params / notes |
-|---|:--:|---|
-| `flip` | ✅ | `horizontal`, `vertical` |
-| `resize` | ✅ | `interpolation` (+ `dst_sizes`) |
-| `rotate` | ✅ | `angle`, `interpolation` |
-| `warp_affine` | ✅ | `angle`, `interpolation` — rotation affine built from `angle` |
-| `warp_perspective` | ✅ | `angle`, `interpolation` — rotation homography built from `angle` |
-| `crop` | ✅ | crop window from `dst_sizes` (anchored top-left) |
-| `crop_mirror_normalize` | ✅ | `offset`, `multiplier`, `mirror` (+ `dst_sizes`) |
-| `resize_mirror_normalize` | ✅ | `interpolation`, `mean`, `std_dev`, `mirror` (+ `dst_sizes`) |
-| `resize_crop_mirror` | ✅ | `interpolation`, `mirror` (+ `dst_sizes`) |
-| `remap` | ☐ | remap tables |
-| `lens_correction` | ☐ | remap tables + matrices |
-| `transpose` | ☐ | generic 3D descriptor |
-| `slice` | ☐ | generic 3D descriptor |
-| `concat` | ☐ | generic 3D descriptor |
-| `phase` | ☐ | two-source |
-| `crop_and_patch` | ☐ | two-source |
-| `flip_voxel` | ☐ | generic 3D descriptor |
-| `jpeg_compression_distortion` | ☐ | |
-| `fisheye` | ☐ | |
-
-### Data exchange
-
-| Operator | Done | Params / notes |
-|---|:--:|---|
-| `copy` | ✅ | no params; memory-bandwidth baseline |
-| `channel_permute` | ✅ | `perm0`, `perm1`, `perm2` — RGB only (PKD3/PLN3) |
-| `color_to_greyscale` | ☐ | dst is 1-channel |
-| `yuv_to_rgb` | ☐ | separate Y/UV planes |
-| `yuv_to_rgb_cubic_v` | ☐ | separate Y/UV planes |
-| `yuv_to_rgb_linear_v` | ☐ | separate Y/UV planes |
-
-### Arithmetic operations
-
-Need generic 3D descriptor (`RpptGenericDescPtr` + ROI3D) support in the harness.
-
-| Operator | Done | Params / notes |
-|---|:--:|---|
-| `add_scalar` | ☐ | |
-| `subtract_scalar` | ☐ | |
-| `multiply_scalar` | ☐ | |
-| `fused_multiply_add_scalar` | ☐ | |
-| `magnitude` | ☐ | two-source |
-| `log` | ☐ | |
-| `log1p` | ☐ | |
-| `tensor_add_tensor` | ☐ | two-source, broadcast modes |
-| `tensor_subtract_tensor` | ☐ | two-source, broadcast modes |
-| `tensor_multiply_tensor` | ☐ | two-source, broadcast modes |
-| `tensor_divide_tensor` | ☐ | two-source, broadcast modes |
-
-### Statistical operations
-
-Output is a reduction (stats array), not a dst image — needs harness support for capturing scalar outputs.
-
-| Operator | Done | Params / notes |
-|---|:--:|---|
-| `tensor_sum` | ☐ | |
-| `tensor_min` | ☐ | |
-| `tensor_max` | ☐ | |
-| `tensor_mean` | ☐ | |
-| `tensor_stddev` | ☐ | |
-| `normalize` | ☐ | |
-| `threshold` | ☐ | |
-
-### Bitwise operations
-
-| Operator | Done | Params / notes |
-|---|:--:|---|
-| `bitwise_not` | ✅ | no params — U8 only |
-| `bitwise_and` | ☐ | two-source |
-| `bitwise_or` | ☐ | two-source |
-| `bitwise_xor` | ☐ | two-source |
-| `tensor_and_tensor` | ☐ | two-source |
-| `tensor_or_tensor` | ☐ | two-source |
-| `tensor_xor_tensor` | ☐ | two-source |
-
-### Audio augmentations
-
-Operate on 1D audio tensors with separate input setup, so they need a distinct input path in the harness.
-
-| Operator | Done | Params / notes |
-|---|:--:|---|
-| `non_silent_region_detection` | ☐ | |
-| `to_decibels` | ☐ | |
-| `pre_emphasis_filter` | ☐ | |
-| `down_mixing` | ☐ | |
-| `spectrogram` | ☐ | |
-| `mel_filter_bank` | ☐ | |
-| `resample` | ☐ | |
-| `audio_tensor_add_tensor` | ☐ | |
-| `audio_tensor_mul_scalar` | ☐ | |
-
 ## Adding an op
 
 Each RPP op has a distinct C signature, so each needs a small adapter under `src/ops/bench_<name>.cpp`:
@@ -366,6 +163,114 @@ Each RPP op has a distinct C signature, so each needs a small adapter under `src
 4. Register with `REGISTER_RPP_BENCH("config_name", AdapterClass)`.
 
 The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
+
+## Operators
+
+| Category | Operator | Done | Params / notes |
+|---|---|:--:|---|
+| Color | `brightness` | ✅ | `alpha`, `beta` |
+| Color | `gamma_correction` | ✅ | `gamma` |
+| Color | `contrast` | ✅ | `factor`, `center` |
+| Color | `exposure` | ✅ | `factor` |
+| Color | `hue` | ✅ | `hue` — RGB only (PKD3/PLN3) |
+| Color | `saturation` | ✅ | `saturation` — RGB only (PKD3/PLN3) |
+| Color | `color_temperature` | ✅ | `adjustment` |
+| Color | `color_twist` | ✅ | `brightness`, `contrast`, `hue`, `saturation` |
+| Color | `color_jitter` | ✅ | `brightness`, `contrast`, `hue`, `saturation` |
+| Color | `histogram_equalize` | ✅ | no params — U8 only; HOST only (HIP kernel leaks an internal scratch buffer) |
+| Color | `color_cast` | ✅ | `r`, `g`, `b`, `alpha` — RGB only (PKD3/PLN3) |
+| Color | `lut` | ✅ | identity 65536-entry table — U8/I8 only |
+| Color | `blend` | ☐ | two-source |
+| Effects | `vignette` | ✅ | `intensity` |
+| Effects | `solarize` | ✅ | `threshold` |
+| Effects | `posterize` | ✅ | `level_bits` |
+| Effects | `channel_dropout` | ✅ | per-channel keep/drop mask |
+| Effects | `fog` | ✅ | `intensity`, `grey` |
+| Effects | `snow` | ✅ | `brightness_coefficient`, `threshold`, `dark_mode` |
+| Effects | `gaussian_noise` | ✅ | `mean`, `std_dev`, `seed` |
+| Effects | `shot_noise` | ✅ | `factor`, `seed` |
+| Effects | `salt_and_pepper_noise` | ✅ | `noise_probability`, `salt_probability`, `salt_value`, `pepper_value`, `seed` |
+| Effects | `jitter` | ✅ | `kernel_size`, `seed` |
+| Effects | `gridmask` | ✅ | `tile_width`, `grid_ratio`, `grid_angle`, `translate_x`, `translate_y` |
+| Effects | `spatter` | ✅ | `r`, `g`, `b` (RpptRGB by value) — RGB only (PKD3/PLN3) |
+| Effects | `rain` | ✅ | `rain_percentage`, `rain_width`, `rain_height`, `slant_angle`, `alpha` — stages via RPP host scratch (~0.4 GB × batch); keep batch modest on low-RAM hosts |
+| Effects | `erase` | ✅ | one centred box/image, RGB colour — 3-channel only |
+| Effects | `glitch` | ✅ | `r_x`/`r_y`/`g_x`/`g_y`/`b_x`/`b_y` channel offsets — 3-channel only |
+| Effects | `non_linear_blend` | ☐ | two-source |
+| Effects | `water` | ☐ | |
+| Effects | `ricap` | ☐ | |
+| Effects | `pixelate` | ☐ | external scratch buffer |
+| Effects | `cutout_dropout` | ☐ | |
+| Effects | `grid_dropout` | ☐ | |
+| Effects | `random_erase` | ☐ | |
+| Effects | `coarse_dropout` | ☐ | |
+| Effects | `gaussian_noise_voxel` | ☐ | generic 3D descriptor |
+| Filter | `gaussian_blur` | ✅ | `kernel_size`, `std_dev` — maps to `rppt_gaussian_filter` |
+| Filter | `box_filter` | ✅ | `kernel_size` |
+| Filter | `median_filter` | ✅ | `kernel_size` |
+| Filter | `emboss` | ✅ | `kernel_size`, `strength` |
+| Filter | `sobel_filter` | ✅ | `sobel_type`, `kernel_size` — single-channel (PLN1); dst is 1-channel |
+| Morphological | `erode` | ✅ | `kernel_size` — HIP only |
+| Morphological | `dilate` | ✅ | `kernel_size` — HIP only |
+| Geometric | `flip` | ✅ | `horizontal`, `vertical` |
+| Geometric | `resize` | ✅ | `interpolation` (+ `dst_sizes`) |
+| Geometric | `rotate` | ✅ | `angle`, `interpolation` |
+| Geometric | `warp_affine` | ✅ | `angle`, `interpolation` — rotation affine built from `angle` |
+| Geometric | `warp_perspective` | ✅ | `angle`, `interpolation` — rotation homography built from `angle` |
+| Geometric | `crop` | ✅ | crop window from `dst_sizes` (anchored top-left) |
+| Geometric | `crop_mirror_normalize` | ✅ | `offset`, `multiplier`, `mirror` (+ `dst_sizes`) |
+| Geometric | `resize_mirror_normalize` | ✅ | `interpolation`, `mean`, `std_dev`, `mirror` (+ `dst_sizes`) |
+| Geometric | `resize_crop_mirror` | ✅ | `interpolation`, `mirror` (+ `dst_sizes`) |
+| Geometric | `remap` | ☐ | remap tables |
+| Geometric | `lens_correction` | ☐ | remap tables + matrices |
+| Geometric | `transpose` | ☐ | generic 3D descriptor |
+| Geometric | `slice` | ☐ | generic 3D descriptor |
+| Geometric | `concat` | ☐ | generic 3D descriptor |
+| Geometric | `phase` | ☐ | two-source |
+| Geometric | `crop_and_patch` | ☐ | two-source |
+| Geometric | `flip_voxel` | ☐ | generic 3D descriptor |
+| Geometric | `jpeg_compression_distortion` | ☐ | |
+| Geometric | `fisheye` | ☐ | |
+| Data exchange | `copy` | ✅ | no params; memory-bandwidth baseline |
+| Data exchange | `channel_permute` | ✅ | `perm0`, `perm1`, `perm2` — RGB only (PKD3/PLN3) |
+| Data exchange | `color_to_greyscale` | ☐ | dst is 1-channel |
+| Data exchange | `yuv_to_rgb` | ☐ | separate Y/UV planes |
+| Data exchange | `yuv_to_rgb_cubic_v` | ☐ | separate Y/UV planes |
+| Data exchange | `yuv_to_rgb_linear_v` | ☐ | separate Y/UV planes |
+| Arithmetic | `add_scalar` | ☐ | |
+| Arithmetic | `subtract_scalar` | ☐ | |
+| Arithmetic | `multiply_scalar` | ☐ | |
+| Arithmetic | `fused_multiply_add_scalar` | ☐ | |
+| Arithmetic | `magnitude` | ☐ | two-source |
+| Arithmetic | `log` | ☐ | |
+| Arithmetic | `log1p` | ☐ | |
+| Arithmetic | `tensor_add_tensor` | ☐ | two-source, broadcast modes |
+| Arithmetic | `tensor_subtract_tensor` | ☐ | two-source, broadcast modes |
+| Arithmetic | `tensor_multiply_tensor` | ☐ | two-source, broadcast modes |
+| Arithmetic | `tensor_divide_tensor` | ☐ | two-source, broadcast modes |
+| Statistical | `tensor_sum` | ☐ | |
+| Statistical | `tensor_min` | ☐ | |
+| Statistical | `tensor_max` | ☐ | |
+| Statistical | `tensor_mean` | ☐ | |
+| Statistical | `tensor_stddev` | ☐ | |
+| Statistical | `normalize` | ☐ | |
+| Statistical | `threshold` | ☐ | |
+| Bitwise | `bitwise_not` | ✅ | no params — U8 only |
+| Bitwise | `bitwise_and` | ☐ | two-source |
+| Bitwise | `bitwise_or` | ☐ | two-source |
+| Bitwise | `bitwise_xor` | ☐ | two-source |
+| Bitwise | `tensor_and_tensor` | ☐ | two-source |
+| Bitwise | `tensor_or_tensor` | ☐ | two-source |
+| Bitwise | `tensor_xor_tensor` | ☐ | two-source |
+| Audio | `non_silent_region_detection` | ☐ | |
+| Audio | `to_decibels` | ☐ | |
+| Audio | `pre_emphasis_filter` | ☐ | |
+| Audio | `down_mixing` | ☐ | |
+| Audio | `spectrogram` | ☐ | |
+| Audio | `mel_filter_bank` | ☐ | |
+| Audio | `resample` | ☐ | |
+| Audio | `audio_tensor_add_tensor` | ☐ | |
+| Audio | `audio_tensor_mul_scalar` | ☐ | |
 
 ## Contributing
 
