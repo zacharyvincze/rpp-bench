@@ -4,6 +4,8 @@
 
 Config-driven micro-benchmarks for [RPP](https://github.com/ROCm/rpp) (ROCm Performance Primitives) operators, built on [Google Benchmark].
 
+## Index
+
 - [Requirements](#requirements)
 - [Build](#build)
 - [Run](#run)
@@ -19,7 +21,7 @@ Config-driven micro-benchmarks for [RPP](https://github.com/ROCm/rpp) (ROCm Perf
 ## Requirements
 
 - **An installed RPP** discoverable via `find_package(rpp)` — typically from a ROCm install under `/opt/rocm`, or a local RPP build. The active backend (HOST vs HIP) is inherited from it.
-- **CMake ≥ 3.20** and any C++17 host compiler. The benchmarks only issue host-side HIP calls, so no ROCm/amdclang toolchain is needed to build.
+- **CMake ≥ 3.20** and any C++17 host compiler.
 - **Python 3** for the result-analysis scripts in [scripts/](scripts/). `json2csv.py` uses only the standard library; `plot_results.py` needs `matplotlib` and `numpy`.
 
 Google Benchmark and nlohmann/json are fetched automatically at configure time — no system install of either is required.
@@ -27,7 +29,7 @@ Google Benchmark and nlohmann/json are fetched automatically at configure time �
 ## Build
 
 ```shell
-cmake -S . -B build            # uses $ROCM_PATH or /opt/rocm
+cmake -S . -B build
 cmake --build build -j
 ```
 
