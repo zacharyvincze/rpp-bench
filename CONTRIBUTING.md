@@ -1,4 +1,4 @@
-# Contributing to rpp-mark
+# Contributing to rpp-bench
 
 Thanks for helping improve the RPP benchmark harness. This guide covers the essentials; the [README](README.md) has the deeper detail on the config format and the harness internals.
 

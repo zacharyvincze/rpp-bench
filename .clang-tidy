@@ -1,4 +1,4 @@
-# clang-tidy configuration for rpp-mark.
+# clang-tidy configuration for rpp-bench.
 #
 # Pairs with .clang-format (run tidy's fixes through it via FormatStyle: file).
 # The enabled check groups catch real bugs and portability/perf issues; the

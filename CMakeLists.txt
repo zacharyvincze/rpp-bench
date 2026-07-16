@@ -1,5 +1,5 @@
 # ============================================================================
-# rpp-mark - config-driven micro-benchmarks for RPP operators.
+# rpp-bench - config-driven micro-benchmarks for RPP operators.
 #
 # Standalone project: it consumes an *installed* RPP via find_package(rpp) and
 # fetches Google Benchmark + nlohmann/json at configure time (neither needs to
@@ -44,7 +44,7 @@ set(ROCM_PATH "${ROCM_PATH}" CACHE PATH "ROCm installation path")
 list(APPEND CMAKE_PREFIX_PATH "${ROCM_PATH}" "${ROCM_PATH}/lib/cmake")
 
 find_package(rpp REQUIRED)
-message(STATUS "rpp-mark: found RPP (${rpp_BACKEND_TYPE} backend) at ${rpp_INCLUDE_DIR}")
+message(STATUS "rpp-bench: found RPP (${rpp_BACKEND_TYPE} backend) at ${rpp_INCLUDE_DIR}")
 
 # ----------------------------------------------------------------------------
 # Third-party dependencies, fetched at configure time.

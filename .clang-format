@@ -1,4 +1,4 @@
-# Style for rpp-mark. Tuned to match the existing sources in common/ and src/:
+# Style for rpp-bench. Tuned to match the existing sources in common/ and src/:
 # 4-space indent, attached braces, right-aligned pointers, ~100 col.
 ---
 Language:        Cpp

@@ -1,4 +1,4 @@
-# rpp-mark
+# rpp-bench
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -32,8 +32,8 @@ Google Benchmark and nlohmann/json are fetched automatically at configure time �
 The following snippet clones, builds the benchmarks, and runs a quick smoke test to confirm the HIP and HOST RPP backends are working as intended.
 
 ```shell
-git clone https://github.com/zacharyvincze/rpp-mark.git
-cd rpp-mark
+git clone https://github.com/zacharyvincze/rpp-bench.git
+cd rpp-bench
 cmake -S . -B build
 cmake --build build -j
 ./build/rpp_bench --config=config/smoke.json --progress
@@ -69,7 +69,13 @@ cmake --build build -j
 ./build/rpp_bench --help
 ```
 
-Two configs ship in [config/](config/): `smoke.json` (small and fast, for a sanity check) and `example.json` (a fuller sweep). Each benchmark reports `real_time`, `cpu_time`, plus the rate counters `images_per_sec`, `pixels_per_sec`, and `bytes_per_second`.
+Configs ship in [config/](config/):
+
+- `smoke.json` — small and fast, for a sanity check.
+- `example.json` — a fuller sweep across a compact matrix.
+- `sweep_host.json` / `sweep_hip.json` — backend-specific sweeps over dimensions common in inference preprocessing pipelines: model-input sizes (224×224 for ImageNet classifiers, 640×640 for YOLO detection, plus 224/256/384 resize targets) and camera/video frame resolutions (720p, 1080p, and — on HIP — 4K UHD). The HIP sweep runs heavier (batches 1/8/32, up to 4K); the HOST sweep is lighter (batches 1/8, up to 1080p) since CPU sweeps at 4K are impractical. Each lists only the ops implemented for its backend (the HOST sweep drops GPU-only `erode`/`dilate`; `histogram_equalize` is HOST-only and auto-skips on HIP).
+
+Each benchmark reports `real_time`, `cpu_time`, plus the rate counters `images_per_sec`, `pixels_per_sec`, and `bytes_per_second`.
 
 ## Filtering benchmarks
 
