@@ -26,6 +26,18 @@ Config-driven micro-benchmarks for [RPP](https://github.com/ROCm/rpp) (ROCm Perf
 
 Google Benchmark and nlohmann/json are fetched automatically at configure time — no system install of either is required.
 
+## Quick Start
+
+The following snippet clones, builds the benchmarks, and runs a quick smoke test to confirm the HIP and HOST RPP backends are working as intended.
+
+```shell
+git clone https://github.com/zacharyvincze/rpp-mark.git
+cd rpp-mark
+cmake -S . -B build
+cmake --build build -j
+./build/rpp_bench --config=config/smoke.json --progress
+```
+
 ## Build
 
 ```shell
@@ -51,6 +63,9 @@ cmake --build build -j
 ./build/rpp_bench --config=config/smoke.json \
                   --benchmark_filter='op:resize.*backend:HIP' \
                   --benchmark_out=results.json --benchmark_out_format=json
+
+# List the help menu for more options or as a quick reference.
+./build/rpp_bench --help
 ```
 
 Two configs ship in [config/](config/): `smoke.json` (small and fast, for a sanity check) and `example.json` (a fuller sweep). Each benchmark reports `real_time`, `cpu_time`, plus the rate counters `images_per_sec`, `pixels_per_sec`, and `bytes_per_second`.
