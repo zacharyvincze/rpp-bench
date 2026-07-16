@@ -198,7 +198,7 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 | Color | `histogram_equalize` | ✅ | no params — U8 only; HOST only (HIP kernel leaks an internal scratch buffer) |
 | Color | `color_cast` | ✅ | `r`, `g`, `b`, `alpha` — RGB only (PKD3/PLN3) |
 | Color | `lut` | ✅ | identity 65536-entry table — U8/I8 only |
-| Color | `blend` | ☐ | two-source |
+| Color | `blend` | ✅ | `alpha` — two-source (alpha-blend) |
 | Effects | `vignette` | ✅ | `intensity` |
 | Effects | `solarize` | ✅ | `threshold` |
 | Effects | `posterize` | ✅ | `level_bits` |
@@ -214,7 +214,7 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 | Effects | `rain` | ✅ | `rain_percentage`, `rain_width`, `rain_height`, `slant_angle`, `alpha` — stages via RPP host scratch (~0.4 GB × batch); keep batch modest on low-RAM hosts |
 | Effects | `erase` | ✅ | one centred box/image, RGB colour — 3-channel only |
 | Effects | `glitch` | ✅ | `r_x`/`r_y`/`g_x`/`g_y`/`b_x`/`b_y` channel offsets — 3-channel only |
-| Effects | `non_linear_blend` | ☐ | two-source |
+| Effects | `non_linear_blend` | ✅ | `std_dev` — two-source (Gaussian-mask blend) |
 | Effects | `water` | ☐ | |
 | Effects | `ricap` | ☐ | |
 | Effects | `pixelate` | ☐ | external scratch buffer |
@@ -244,8 +244,8 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 | Geometric | `transpose` | ☐ | generic 3D descriptor |
 | Geometric | `slice` | ☐ | generic 3D descriptor |
 | Geometric | `concat` | ☐ | generic 3D descriptor |
-| Geometric | `phase` | ☐ | two-source |
-| Geometric | `crop_and_patch` | ☐ | two-source |
+| Geometric | `phase` | ✅ | no params — two-source |
+| Geometric | `crop_and_patch` | ✅ | no params — two-source; fixed centred half-size crop/patch window |
 | Geometric | `flip_voxel` | ☐ | generic 3D descriptor |
 | Geometric | `jpeg_compression_distortion` | ☐ | |
 | Geometric | `fisheye` | ☐ | |
@@ -259,7 +259,7 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 | Arithmetic | `subtract_scalar` | ☐ | |
 | Arithmetic | `multiply_scalar` | ☐ | |
 | Arithmetic | `fused_multiply_add_scalar` | ☐ | |
-| Arithmetic | `magnitude` | ☐ | two-source |
+| Arithmetic | `magnitude` | ✅ | no params — two-source |
 | Arithmetic | `log` | ☐ | |
 | Arithmetic | `log1p` | ☐ | |
 | Arithmetic | `tensor_add_tensor` | ☐ | two-source, broadcast modes |
