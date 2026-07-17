@@ -1,0 +1,102 @@
+{
+  "iterations": 10,
+  "repetitions": 1,
+  "warmup_iterations": 5,
+
+  "defaults": {
+    "backends": ["HOST"],
+    "dtypes": ["U8", "F32"],
+    "layouts": ["PKD3", "PLN3"],
+    "batch_sizes": [1, 8],
+    "image_sizes": [[224, 224], [640, 640], [1280, 720], [1920, 1080]]
+  },
+
+  "ops": [
+    { "name": "copy" },
+
+    { "name": "brightness", "params": { "alpha": 1.75, "beta": 50 } },
+    { "name": "gamma_correction", "params": { "gamma": 0.5 } },
+    { "name": "contrast", "params": { "factor": 2.96, "center": 128 } },
+    { "name": "exposure", "params": { "factor": 1.5 } },
+    { "name": "hue", "params": { "hue": 90 } },
+    { "name": "saturation", "params": { "saturation": 1.5 } },
+    { "name": "color_temperature", "params": { "adjustment": 40 } },
+    { "name": "color_twist", "params": { "brightness": 1.5, "contrast": 1.2, "hue": 90, "saturation": 1.5 } },
+    { "name": "color_jitter", "params": { "brightness": 1.5, "contrast": 1.2, "hue": 90, "saturation": 1.5 } },
+    { "name": "histogram_equalize" },
+    { "name": "color_cast", "params": { "r": 128, "g": 64, "b": 32, "alpha": 0.5 } },
+    { "name": "lut" },
+
+    { "name": "vignette", "params": { "intensity": 6.0 } },
+    { "name": "solarize", "params": { "threshold": 0.5 } },
+    { "name": "posterize", "params": { "level_bits": 4 } },
+    { "name": "channel_dropout" },
+    { "name": "fog", "params": { "intensity": 0.4, "grey": 0.5 } },
+    { "name": "snow", "params": { "brightness_coefficient": 2.5, "threshold": 0.5, "dark_mode": 0 } },
+    { "name": "gaussian_noise", "params": { "mean": 0.0, "std_dev": 0.2, "seed": 0 } },
+    { "name": "shot_noise", "params": { "factor": 80.0, "seed": 0 } },
+    { "name": "salt_and_pepper_noise", "params": { "noise_probability": 0.1, "salt_probability": 0.5, "seed": 0 } },
+    { "name": "jitter", "params": { "kernel_size": 3, "seed": 0 } },
+    { "name": "gridmask", "params": { "tile_width": 40, "grid_ratio": 0.6 } },
+    { "name": "spatter", "params": { "r": 65, "g": 42, "b": 20 } },
+    { "name": "rain", "batch_sizes": [1, 8], "image_sizes": [[224, 224], [640, 640], [1280, 720]], "params": { "rain_percentage": 0.03, "rain_height": 15, "alpha": 0.5 } },
+    { "name": "glitch", "params": { "r_x": 8, "r_y": 8, "b_x": -8, "b_y": -8 } },
+    { "name": "erase" },
+
+    { "name": "gaussian_blur", "params": { "kernel_size": 5, "std_dev": 1.5 } },
+    { "name": "box_filter", "params": { "kernel_size": 5 } },
+    { "name": "median_filter", "params": { "kernel_size": 5 } },
+    { "name": "emboss", "params": { "kernel_size": 3, "strength": 1.0 } },
+    { "name": "sobel_filter", "layouts": ["PLN1"], "params": { "sobel_type": 0, "kernel_size": 3 } },
+
+    { "name": "bitwise_not" },
+    { "name": "bitwise_and" },
+    { "name": "bitwise_or" },
+    { "name": "bitwise_xor" },
+    { "name": "blend", "params": { "alpha": 0.5 } },
+    { "name": "non_linear_blend", "params": { "std_dev": 50.0 } },
+    { "name": "magnitude" },
+    { "name": "phase" },
+    { "name": "crop_and_patch" },
+    { "name": "channel_permute", "params": { "perm0": 2, "perm1": 1, "perm2": 0 } },
+
+    { "name": "transpose", "params": { "perm": "1,0,2" } },
+    { "name": "slice", "params": { "fraction": 0.5 } },
+    { "name": "normalize", "params": { "axisMask": 3 } },
+    { "name": "log" },
+    { "name": "concat", "params": { "axis": 0 } },
+
+    { "name": "add_scalar", "params": { "depth": 16, "add": 40.0 } },
+    { "name": "subtract_scalar", "params": { "depth": 16, "subtract": 40.0 } },
+    { "name": "multiply_scalar", "params": { "depth": 16, "multiply": 80.0 } },
+    { "name": "fused_multiply_add_scalar", "params": { "depth": 16, "multiply": 80.0, "add": 5.0 } },
+    { "name": "flip_voxel", "params": { "depth": 16, "horizontal": 1 } },
+    { "name": "gaussian_noise_voxel", "params": { "depth": 16, "mean": 1.4, "stddev": 0.6 } },
+
+    { "name": "tensor_add_tensor" },
+    { "name": "tensor_subtract_tensor" },
+    { "name": "tensor_multiply_tensor" },
+    { "name": "tensor_divide_tensor" },
+    { "name": "tensor_and_tensor" },
+    { "name": "tensor_or_tensor" },
+    { "name": "tensor_xor_tensor" },
+
+    { "name": "flip", "params": { "horizontal": 1, "vertical": 0 } },
+    { "name": "rotate", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
+    { "name": "warp_affine", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
+    { "name": "warp_perspective", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
+    { "name": "crop", "dst_sizes": [[112, 112], [160, 160]] },
+    { "name": "crop_mirror_normalize", "dst_sizes": [[112, 112], [160, 160]], "params": { "offset": 0.0, "multiplier": 1.0, "mirror": 1 } },
+    { "name": "resize_crop_mirror", "dst_sizes": [[224, 224], [384, 384]], "params": { "interpolation": "BILINEAR", "mirror": 1 } },
+    { "name": "resize_mirror_normalize", "dst_sizes": [[224, 224], [384, 384]], "params": { "interpolation": "BILINEAR", "mean": 0.0, "std_dev": 1.0, "mirror": 1 } },
+    {
+      "name": "resize",
+      "dst_sizes": [[224, 224], [256, 256], [384, 384]],
+      "param_sets": [
+        { "interpolation": "BILINEAR" },
+        { "interpolation": "NEAREST_NEIGHBOR" },
+        { "interpolation": "BICUBIC" }
+      ]
+    }
+  ]
+}

@@ -13,8 +13,27 @@
 #include <rpp/rppdefs.h>
 #include "config/bench_enums.hpp"
 #include <cstddef>
+#include <vector>
 
 namespace rppbench {
+
+// Which descriptor dialect a tensor speaks. The vast majority of ops are 4D
+// images (RpptDesc + RpptROI); the generic-descriptor ops (transpose, slice,
+// normalize, the voxel/broadcast families) use RpptGenericDesc plus either a
+// flat Rpp32u roiTensor (GenericND) or an RpptROI3D (Voxel).
+enum class TensorKind : uint8_t { IMAGE, GENERIC_ND, VOXEL };
+
+// A tensor's shape as an adapter declares it to the runner. The runner turns
+// each spec into an allocated TensorBuffer (via init() for Image, initGeneric()
+// for the generic kinds), so ops no longer depend on the runner assuming 4D
+// images. `dims` is in physical/layout order and INCLUDES the batch as dims[0]
+// (e.g. NHWC image {n,h,w,c}; NCDHW voxel {n,c,d,h,w}).
+struct TensorSpec {
+    TensorKind kind = TensorKind::IMAGE;
+    std::vector<Rpp32u> dims;
+    RpptLayout layout = RpptLayout::NHWC;
+    RpptDataType dtype = RpptDataType::U8;
+};
 
 // ---- raw memory helpers (HIP-aware; fall back to host malloc when HOST-only) ----
 /**
@@ -50,20 +69,44 @@ void *bench_pinned_alloc(size_t bytes, bool isHip);
 void bench_pinned_free(void *p, bool isHip);
 
 // A single input or output tensor: descriptor + backing buffer + full-image ROI.
+//
+// Serves two descriptor dialects off one shared byte core (allocation + fill +
+// guard, all dialect-agnostic). init() builds the 4D image view (RpptDesc +
+// RpptROI); initGeneric() builds the RpptGenericDesc view plus its matching ROI
+// companion (a flat roiTensor for GenericND, an RpptROI3D for Voxel). `kind`
+// records which view is live; image adapters touch only desc/descPtr/roi/roiType
+// and generic adapters only gdesc/gdescPtr/roiTensor/roi3d.
 class TensorBuffer {
 public:
+    TensorKind kind = TensorKind::IMAGE;
+
+    // ---- image view (kind == IMAGE) ----
     RpptDesc desc{};
     RpptDescPtr descPtr = &desc;
-    void *data = nullptr;   // device (HIP) or host (HOST) buffer
     RpptROI *roi = nullptr; // per-image ROI (pinned), XYWH full-image
     RpptRoiType roiType = RpptRoiType::XYWH;
+
+    // ---- generic view (kind == GENERIC_ND / VOXEL) ----
+    // The generic descriptor is allocated in PINNED memory (see initGeneric): the
+    // HIP kernels for these ops dereference gdescPtr->strides / ->dims ON THE
+    // DEVICE, so a pageable host struct would stall the GPU on page faults. (Image
+    // kernels read RpptDesc host-side, so `desc` above can stay an inline member.)
+    RpptGenericDescPtr gdescPtr = nullptr;
+    Rpp32u *roiTensor = nullptr; // flat begin/length per dim: batch*numDims*2
+    RpptROI3D *roi3d = nullptr;  // per-sample 3D ROI (VOXEL only)
+    RpptRoi3DType roi3dType = RpptRoi3DType::XYZWHD;
+    int numDims = 0;          // logical dim count of the generic descriptor
+    std::vector<Rpp32u> dims; // physical dims (dims[0] == batch)
+
+    // ---- shared byte core ----
+    void *data = nullptr; // device (HIP) or host (HOST) buffer
     size_t sizeBytes = 0; // total allocation (offset + data + guard)
     size_t dataBytes = 0; // logical tensor bytes (for throughput)
-    int batch = 0, width = 0, height = 0, channels = 0;
+    int batch = 0, width = 0, height = 0, depth = 0, channels = 0;
     RpptDataType dtype = RpptDataType::U8;
 
     /**
-     * @brief Configure descriptor/strides/ROI and allocate.
+     * @brief Configure the 4D image descriptor/strides/ROI and allocate.
      *
      * A trailing guard pad is always added to absorb vectorized boundary
      * reads/writes near the last row/column.
@@ -80,6 +123,18 @@ public:
     void init(RppBackend backend, RpptDataType dt, Layout layout, int n, int w, int h,
               int offsetInBytes = 0, int additionalStride = 0);
     /**
+     * @brief Configure the generic (RpptGenericDesc) descriptor and allocate.
+     *
+     * Computes packed (contiguous) strides over spec.dims, builds a flat
+     * begin/length roiTensor covering the full tensor, and for VOXEL specs also
+     * builds a per-sample RpptROI3D. spec.dims[0] is the batch; the remaining
+     * dims are the per-sample shape in layout order. Shares the same guard-padded
+     * allocation and fill() as the image path.
+     * @param backend HOST or HIP; selects the allocator.
+     * @param spec The tensor shape/layout/dtype the adapter declared.
+     */
+    void initGeneric(RppBackend backend, const TensorSpec &spec);
+    /**
      * @brief Fill the buffer with representative, well-formed values for the dtype.
      *
      * HIP buffers are generated directly in device memory via rocRAND (no H2D);
@@ -87,10 +142,11 @@ public:
      */
     void fill() const;
     /**
-     * @brief Rewrite the canonical full-image XYWH ROI.
+     * @brief Rewrite the canonical full-tensor ROI for the live descriptor view.
      *
      * Call before each timed op call: some RPP ops convert the ROI in place,
-     * corrupting it across repeated calls.
+     * corrupting it across repeated calls. Rewrites the XYWH image ROI, or the
+     * flat roiTensor / RpptROI3D for the generic views.
      */
     void resetRoi() const;
     void free();

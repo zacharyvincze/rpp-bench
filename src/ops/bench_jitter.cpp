@@ -9,7 +9,7 @@
  *   rppt_jitter(src, srcDesc, dst, dstDesc, kernelSizeTensor, seed,
  *               roi, roiType, handle, backend)
  */
-#include "harness/bench_registry.hpp"
+#include "harness/bench_simple_adapter.hpp"
 #include <rpp/rppt_tensor_effects_augmentations.h>
 
 namespace rppbench {

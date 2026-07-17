@@ -29,8 +29,8 @@
     { "name": "median_filter", "params": { "kernel_size": 3 } },
     { "name": "emboss", "params": { "kernel_size": 3, "strength": 1.0 } },
     { "name": "sobel_filter", "layouts": ["PLN1"], "params": { "sobel_type": 0, "kernel_size": 3 } },
-    { "name": "erode", "params": { "kernel_size": 3 } },
-    { "name": "dilate", "params": { "kernel_size": 3 } },
+    { "name": "erode", "backends": ["HIP"], "params": { "kernel_size": 3 } },
+    { "name": "dilate", "backends": ["HIP"], "params": { "kernel_size": 3 } },
     { "name": "histogram_equalize" },
     { "name": "gaussian_noise", "params": { "mean": 0.0, "std_dev": 0.2, "seed": 0 } },
     { "name": "shot_noise", "params": { "factor": 80.0, "seed": 0 } },
@@ -60,6 +60,11 @@
     { "name": "crop_mirror_normalize", "dst_sizes": [[112, 112]], "params": { "multiplier": 1.0, "mirror": 1 } },
     { "name": "resize_crop_mirror", "dst_sizes": [[112, 112]], "params": { "interpolation": "BILINEAR", "mirror": 1 } },
     { "name": "resize_mirror_normalize", "dst_sizes": [[112, 112]], "params": { "interpolation": "BILINEAR", "mirror": 1 } },
-    { "name": "resize", "dst_sizes": [[112, 112]], "params": { "interpolation": "BILINEAR" } }
+    { "name": "resize", "dst_sizes": [[112, 112]], "params": { "interpolation": "BILINEAR" } },
+    { "name": "transpose", "params": { "perm": "1,0,2" } },
+    { "name": "concat", "params": { "axis": 0 } },
+    { "name": "tensor_and_tensor" },
+    { "name": "log", "dtypes": ["F32"] },
+    { "name": "add_scalar", "dtypes": ["F32"], "params": { "depth": 4 } }
   ]
 }

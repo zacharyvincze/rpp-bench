@@ -78,18 +78,42 @@ struct CaseResources {
         ctx = c;
         try {
             adapter = factory();
-            // Every source shares dims/dtype/layout (the two-source rppt_* calls
-            // take a single srcDesc); each is filled independently. Destinations
-            // use the (possibly resized) dst dims.
-            srcs.resize(std::max(1, adapter->numSrc()));
-            dsts.resize(std::max(1, adapter->numDst()));
-            for (auto &s : srcs) {
-                s.init(ctx.backend, ctx.dtype, ctx.layout, ctx.batch, ctx.width, ctx.height,
-                       adapter->srcOffsetBytes(ctx), adapter->srcAdditionalStride(ctx));
-                s.fill();
+            // Generic-descriptor ops declare their tensor shapes via srcSpecs()/
+            // dstSpecs(); an empty list selects the legacy image path. The two
+            // paths differ only in how each TensorBuffer is configured - image via
+            // init(w,h), generic via initGeneric(spec) - after which the runner
+            // treats them uniformly (fill, resetRoi, free).
+            const std::vector<TensorSpec> srcSpecs = adapter->srcSpecs(ctx);
+            const std::vector<TensorSpec> dstSpecs = adapter->dstSpecs(ctx);
+
+            if (srcSpecs.empty()) {
+                // Image path: every source shares dims/dtype/layout (the two-source
+                // rppt_* calls take a single srcDesc); each is filled independently.
+                srcs.resize(std::max(1, adapter->numSrc()));
+                for (auto &s : srcs) {
+                    s.init(ctx.backend, ctx.dtype, ctx.layout, ctx.batch, ctx.width, ctx.height,
+                           adapter->srcOffsetBytes(ctx), adapter->srcAdditionalStride(ctx));
+                    s.fill();
+                }
+            } else {
+                srcs.resize(srcSpecs.size());
+                for (size_t i = 0; i < srcSpecs.size(); ++i) {
+                    srcs[i].initGeneric(ctx.backend, srcSpecs[i]);
+                    srcs[i].fill();
+                }
             }
-            for (auto &d : dsts)
-                d.init(ctx.backend, ctx.dtype, ctx.layout, ctx.batch, ctx.dstWidth, ctx.dstHeight);
+
+            if (dstSpecs.empty()) {
+                // Destinations use the (possibly resized) dst dims.
+                dsts.resize(std::max(1, adapter->numDst()));
+                for (auto &d : dsts)
+                    d.init(ctx.backend, ctx.dtype, ctx.layout, ctx.batch, ctx.dstWidth,
+                           ctx.dstHeight);
+            } else {
+                dsts.resize(dstSpecs.size());
+                for (size_t i = 0; i < dstSpecs.size(); ++i)
+                    dsts[i].initGeneric(ctx.backend, dstSpecs[i]);
+            }
 
             void *stream = nullptr;
 #if RPP_BENCH_HIP

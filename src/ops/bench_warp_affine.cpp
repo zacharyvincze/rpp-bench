@@ -11,7 +11,7 @@
  *   rppt_warp_affine(src, srcDesc, dst, dstDesc, affineTensor, interpolationType,
  *                    roi, roiType, handle, backend)
  */
-#include "harness/bench_registry.hpp"
+#include "harness/bench_simple_adapter.hpp"
 #include <rpp/rppt_tensor_geometric_augmentations.h>
 #include <cmath>
 

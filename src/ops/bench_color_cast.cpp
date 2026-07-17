@@ -9,7 +9,7 @@
  *   rppt_color_cast(src, srcDesc, dst, dstDesc, rgbTensor, alphaTensor,
  *                   roi, roiType, handle, backend)
  */
-#include "harness/bench_registry.hpp"
+#include "harness/bench_simple_adapter.hpp"
 #include <rpp/rppt_tensor_color_augmentations.h>
 
 namespace rppbench {

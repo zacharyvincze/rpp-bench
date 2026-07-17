@@ -8,7 +8,7 @@
  * Signature:
  *   rppt_copy(src, srcDesc, dst, dstDesc, handle, backend)
  */
-#include "harness/bench_registry.hpp"
+#include "harness/bench_simple_adapter.hpp"
 #include <rpp/rppt_tensor_data_exchange_operations.h>
 
 namespace rppbench {

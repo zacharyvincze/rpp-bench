@@ -9,7 +9,7 @@
  *   rppt_emboss(src, srcDesc, dst, dstDesc, strength, kernelSize, borderType,
  *               roi, roiType, handle, backend)
  */
-#include "harness/bench_registry.hpp"
+#include "harness/bench_simple_adapter.hpp"
 #include <rpp/rppt_tensor_filter_augmentations.h>
 
 namespace rppbench {

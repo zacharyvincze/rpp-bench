@@ -96,12 +96,33 @@ public:
     virtual int srcAdditionalStride(const BenchContext &) const { return 0; }
 
     /**
+     * @brief Declare the shape of each source tensor (generic-descriptor ops only).
+     *
+     * The default (empty) selects the legacy image path: the runner allocates
+     * numSrc() image buffers via TensorBuffer::init() from ctx dims/layout, and
+     * adapters use src[i].descPtr / src[i].roi. Generic-descriptor ops (transpose,
+     * slice, normalize, the voxel/broadcast families) return one TensorSpec per
+     * source instead; the runner allocates each via TensorBuffer::initGeneric(),
+     * and adapters use src[i].gdescPtr with src[i].roiTensor or src[i].roi3d.
+     * @param ctx The fully-resolved sweep point.
+     * @return One spec per source, or empty to use the image path.
+     */
+    virtual std::vector<TensorSpec> srcSpecs(const BenchContext &) const { return {}; }
+    /**
+     * @brief Declare the shape of each destination tensor (generic ops only).
+     *
+     * Empty selects the image path (see srcSpecs()). @return One spec per dest.
+     */
+    virtual std::vector<TensorSpec> dstSpecs(const BenchContext &) const { return {}; }
+
+    /**
      * @brief How many source buffers the runner should allocate for this op.
      *
      * Most ops read one image; two-source ops (blend, bitwise_and, magnitude, ...)
      * return >1. Every source is allocated with identical dims/dtype/layout and
      * filled independently, and they share one descriptor/ROI (which is what the
-     * two-source rppt_* signatures expect). Defaults to 1.
+     * two-source rppt_* signatures expect). Defaults to 1. Ignored on the generic
+     * path, where srcSpecs().size() decides the count.
      * @return Source buffer count (>= 1).
      */
     virtual int numSrc() const { return 1; }
@@ -140,43 +161,15 @@ public:
     virtual void teardown() {}
 };
 
-/**
- * @brief Base for the common single-source, single-destination op.
- *
- * Forwards the collection-based setup()/run() to the single-buffer signatures
- * the vast majority of adapters use, so those adapters need only inherit this
- * instead of OpAdapter. Multi-source/destination ops subclass OpAdapter directly
- * and override numSrc()/numDst() plus the collection forms.
- */
-class SimpleOpAdapter : public OpAdapter {
-public:
-    void setup(const BenchContext &ctx, std::vector<TensorBuffer> &src,
-               std::vector<TensorBuffer> &dst) final {
-        setup(ctx, src[0], dst[0]);
-    }
-    RppStatus run(const BenchContext &ctx, std::vector<TensorBuffer> &src,
-                  std::vector<TensorBuffer> &dst, rppHandle_t handle) final {
-        return run(ctx, src[0], dst[0], handle);
-    }
-
-    /**
-     * @brief Allocate op-specific param tensors. Called once, outside the timing loop.
-     * @param ctx The fully-resolved sweep point.
-     * @param src Ready-to-use source buffer.
-     * @param dst Ready-to-use destination buffer.
-     */
-    virtual void setup(const BenchContext &ctx, TensorBuffer &src, TensorBuffer &dst) = 0;
-    /**
-     * @brief The hot path - issues the rppt_* call. Timed. See OpAdapter::run.
-     * @param ctx The fully-resolved sweep point.
-     * @param src Source buffer.
-     * @param dst Destination buffer.
-     * @param handle The RPP handle to issue the call against.
-     * @return The rppt_* call's status.
-     */
-    virtual RppStatus run(const BenchContext &ctx, TensorBuffer &src, TensorBuffer &dst,
-                          rppHandle_t handle) = 0;
-};
+// Adapter bases build on the OpAdapter interface above and live in their own
+// headers, one per descriptor dialect:
+//   - harness/bench_simple_adapter.hpp    - SimpleOpAdapter, the common
+//     single-source/single-destination 4D image (RpptDesc) op.
+//   - harness/bench_generic_adapters.hpp  - GenericOpAdapter / VoxelOpAdapter /
+//     BroadcastOpAdapter, the generic (RpptGenericDesc) ops, via the
+//     srcSpecs()/dstSpecs() hooks above.
+// Multi-source/destination image ops subclass OpAdapter directly (see
+// src/ops/bench_bitwise_and.cpp).
 
 using AdapterFactory = std::function<std::unique_ptr<OpAdapter>()>;
 

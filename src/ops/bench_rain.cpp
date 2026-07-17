@@ -17,7 +17,7 @@
  *   rppt_rain(src, srcDesc, dst, dstDesc, rainPercentage, rainWidth, rainHeight,
  *             slantAngle, alpha, roi, roiType, handle, backend)
  */
-#include "harness/bench_registry.hpp"
+#include "harness/bench_simple_adapter.hpp"
 #include <rpp/rppt_tensor_effects_augmentations.h>
 
 namespace rppbench {
