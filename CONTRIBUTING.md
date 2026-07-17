@@ -38,14 +38,14 @@ Match the surrounding code: the sources use a banner comment at the top of each 
 
 ## Adding an operator
 
-Op adapters live in `src/ops/bench_<name>.cpp` and self-register. The full recipe is in the README's [*Adding an op*](README.md#adding-an-op) section. In short:
+Op adapters live in `libraries/rpp/ops/bench_<name>.cpp` and self-register. The full recipe is in the README's [*Adding an op*](README.md#adding-an-op) section. In short:
 
-1. Subclass `OpAdapter` (see [common/bench_registry.hpp](common/bench_registry.hpp)).
+1. Subclass `SimpleOpAdapter` or `OpAdapter` (see [libraries/rpp/bench_registry.hpp](libraries/rpp/bench_registry.hpp)).
 2. Allocate op-specific param tensors in `setup()` (use `bench_pinned_alloc` so they work on HIP), issue the `rppt_*` call in `run()`, free in `teardown()`.
-3. Override `supportedDtypes()` / `supportedLayouts()` (and the halo-padding hooks for filter ops) as needed.
+3. Override `supportedDtypes()` / `supportedLayouts()` / `supportedBackends()` (and the halo-padding hooks for filter ops) as needed.
 4. `REGISTER_RPP_BENCH("config_name", AdapterClass)`.
 
-The CMake glob picks up new files under `src/ops/` — re-run `cmake --build`. Add the op to `config/example.json` so it's exercised, and note any backend or dtype quirks in a comment (as [`bench_flip.cpp`](src/ops/bench_flip.cpp) does).
+The CMake glob picks up new files under `libraries/rpp/ops/` — re-run `cmake --build`. Add the op to `config/example.json` so it's exercised, and note any backend or dtype quirks in a comment (as [`bench_flip.cpp`](libraries/rpp/ops/bench_flip.cpp) does). Adding a whole new *library* is documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Pull requests
 

@@ -23,7 +23,7 @@ Config-driven micro-benchmarks for [RPP](https://github.com/ROCm/rpp) (ROCm Perf
 
 - **An installed RPP** discoverable via `find_package(rpp)` — typically from a ROCm install under `/opt/rocm`, or a local RPP build. The active backend (HOST vs HIP) is inherited from it.
 - **CMake ≥ 3.20** and any C++17 host compiler.
-- **Python 3** for the result-analysis scripts in [scripts/](scripts/). `json2csv.py` uses only the standard library; `plot_results.py` needs `matplotlib` and `numpy`.
+- **Python 3** for the result-analysis scripts in [scripts/](scripts/). `json2csv.py` uses only the standard library; `plot.py` needs `matplotlib` and `numpy`.
 
 Google Benchmark and nlohmann/json are fetched automatically at configure time — no system install of either is required.
 
@@ -82,7 +82,7 @@ Each benchmark reports `real_time`, `cpu_time`, plus the rate counters `images_p
 Use Google Benchmark's `--benchmark_filter=<regex>` to select which cases run. The regex is matched (as a substring search) against the full benchmark name, so you can target any encoded field:
 
 ```
-op:resize/backend:HIP/dtype:F32/layout:PKD3/batch:8/size:1920x1080/dst:960x540/params:interpolation=BICUBIC
+op:resize/library:rpp/backend:HIP/dtype:F32/layout:PKD3/batch:8/size:1920x1080/dst:960x540/params:interpolation=BICUBIC
 ```
 
 ```shell
@@ -95,8 +95,8 @@ op:resize/backend:HIP/dtype:F32/layout:PKD3/batch:8/size:1920x1080/dst:960x540/p
 ./build/rpp_bench --config=config/example.json --benchmark_filter='backend:HIP'
 ./build/rpp_bench --config=config/example.json --benchmark_filter='dtype:F32'
 
-# Combine fields with .* (name fields are in a fixed order: op, backend, dtype,
-# layout, batch, size, dst, params).
+# Combine fields with .* (name fields are in a fixed order: op, library, backend,
+# dtype, layout, batch, size, dst, params).
 ./build/rpp_bench --config=config/example.json --benchmark_filter='op:resize.*dtype:F32.*BICUBIC'
 
 # Alternation: two ops.
@@ -129,13 +129,13 @@ Run with `--benchmark_out=results.json --benchmark_out_format=json` to capture m
 python3 scripts/json2csv.py results.json -o results.csv
 ```
 
-The benchmark name encodes the combo (`op:<name>/backend:<HOST|HIP>/dtype:<...>/layout:<...>/batch:<n>/size:<WxH>[/dst:<WxH>]`); `json2csv.py` splits it back into columns and joins the numeric counters, one row per measurement (aggregate mean/median/stddev rows are dropped).
+The benchmark name encodes the combo (`op:<name>/library:<lib>/backend:<HOST|HIP>/dtype:<...>/layout:<...>/batch:<n>/size:<WxH>[/dst:<WxH>]`); `json2csv.py` splits it back into columns (including a `library` column) and joins the numeric counters, one row per measurement (aggregate mean/median/stddev rows are dropped).
 
-**Plot** — `plot_results.py` renders a faceted small-multiples figure (rows = batch size, columns = source size, bars = dtype × layout) on a shared log y-axis, so scaling across every axis is comparable at a glance:
+**Plot** — `plot.py` renders a faceted small-multiples figure (rows = batch size, columns = source size, bars = dtype × layout) on a shared log y-axis, so scaling across every axis is comparable at a glance:
 
 ```shell
-python3 scripts/plot_results.py results.json -o results.png
-python3 scripts/plot_results.py results.json               # writes <input>.png
+python3 scripts/plot.py results.json -o results.png
+python3 scripts/plot.py results.json               # writes <input>.png
 ```
 
 ## Config format
@@ -146,6 +146,7 @@ python3 scripts/plot_results.py results.json               # writes <input>.png
   "repetitions": 3,           // optional: repeats -> mean/median/stddev
   "warmup_iterations": 5,     // optional: untimed iterations run once per case first
   "defaults": {               // base matrix; every op inherits these
+    "library":     "rpp",                // optional: which library (default "rpp"); per-op overridable
     "backends":    ["HOST", "HIP"],
     "dtypes":      ["U8", "F32"],        // U8 | F32 | F16 | I8
     "layouts":     ["PKD3", "PLN3"],     // PKD3 (NHWC c3) | PLN3 (NCHW c3) | PLN1 (NCHW c1)
@@ -168,7 +169,7 @@ python3 scripts/plot_results.py results.json               # writes <input>.png
 }
 ```
 
-Any matrix axis set inside an op overrides the default for that op.
+Any matrix axis set inside an op overrides the default for that op. The `library` scalar (default `rpp`) selects the implementation; each `(op, library)` line is self-contained and carries that library's own params. Today only `rpp` is built in.
 
 ### Params: `params` vs `param_sets`
 
@@ -179,14 +180,14 @@ The active param set is encoded in the benchmark name as `.../params:k1=v1,k2=v2
 
 ## Adding an op
 
-Each RPP op has a distinct C signature, so each needs a small adapter under `src/ops/bench_<name>.cpp`:
+Each RPP op has a distinct C signature, so each needs a small adapter under `libraries/rpp/ops/bench_<name>.cpp`:
 
-1. For a one-source/one-destination op, subclass `SimpleOpAdapter` (see [common/harness/bench_registry.hpp](common/harness/bench_registry.hpp)); its `setup()`/`run()` take a single `src`/`dst`. For a multi-source or multi-destination op, subclass `OpAdapter` directly, override `numSrc()`/`numDst()`, and take `std::vector<TensorBuffer>&` for `src`/`dst` (see [src/ops/bench_bitwise_and.cpp](src/ops/bench_bitwise_and.cpp) for the two-source pattern — all sources share one descriptor/ROI).
+1. For a one-source/one-destination op, subclass `SimpleOpAdapter` (see [libraries/rpp/bench_registry.hpp](libraries/rpp/bench_registry.hpp)); its `setup()`/`run()` take a single `src`/`dst`. For a multi-source or multi-destination op, subclass `OpAdapter` directly, override `numSrc()`/`numDst()`, and take `std::vector<TensorBuffer>&` for `src`/`dst` (see [libraries/rpp/ops/bench_bitwise_and.cpp](libraries/rpp/ops/bench_bitwise_and.cpp) for the two-source pattern — all sources share one descriptor/ROI).
 2. In `setup()` allocate any op-specific param tensors (use `bench_pinned_alloc` so they work on HIP); in `run()` call the `rppt_*` function; free in `teardown()`.
 3. Optionally override `supportedDtypes()` / `supportedLayouts()` / `supportedBackends()` to constrain the sweep (e.g. RGB-only or HIP-only ops), and, for filter-style ops, `srcOffsetBytes()` / `srcAdditionalStride()` to request the halo padding HIP kernels need.
 4. Register with `REGISTER_RPP_BENCH("config_name", AdapterClass)`.
 
-The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
+The CMake glob picks up new files under `libraries/rpp/ops/`; re-run `cmake --build`. Adding a whole new *library* (not just an op) is a module under `libraries/<name>/` — see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
 
 ## Operators
 

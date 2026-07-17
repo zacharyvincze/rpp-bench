@@ -3,8 +3,9 @@
 
 Google Benchmark's built-in CSV reporter is deprecated, so we emit native JSON
 (--benchmark_out=results.json --benchmark_out_format=json) and reshape it here.
-The benchmark name is an encoded key ("op:brightness/backend:HOST/dtype:U8/..."),
-which we split back into columns and join with the numeric counters.
+The benchmark name is an encoded key
+("op:brightness/library:rpp/backend:HOST/dtype:U8/..."), which we split back into
+columns and join with the numeric counters.
 
 Usage:
     python3 json2csv.py results.json > results.csv
@@ -17,7 +18,7 @@ import sys
 
 # Categorical fields encoded in the benchmark name, in a stable column order.
 # "params" holds the op-specific set as "k1=v1,k2=v2" (empty when the op has none).
-NAME_KEYS = ["op", "backend", "dtype", "layout", "batch", "size", "dst", "params"]
+NAME_KEYS = ["op", "library", "backend", "dtype", "layout", "batch", "size", "dst", "params"]
 
 # Numeric fields we pull from each benchmark record when present.
 METRIC_KEYS = [
@@ -32,7 +33,7 @@ METRIC_KEYS = [
 
 
 def parse_name(name):
-    """"op:brightness/backend:HOST/..." -> {"op": "brightness", ...}."""
+    """"op:brightness/library:rpp/backend:HOST/..." -> {"op": "brightness", ...}."""
     fields = {k: "" for k in NAME_KEYS}
     for token in name.split("/"):
         if ":" not in token:
