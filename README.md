@@ -223,7 +223,7 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 | Effects | `non_linear_blend` | ✅ | `std_dev` — two-source (Gaussian-mask blend) |
 | Effects | `water` | ✅ | `amplitude_x/y`, `frequency_x/y`, `phase_x/y` — six per-image float tensors |
 | Effects | `ricap` | ✅ | no params — patches output from 4 crop regions of permuted batch images; requires batch > 1 (config overrides `batch_sizes`) |
-| Effects | `pixelate` | ☐ | external scratch buffer |
+| Effects | `pixelate` | ✅ | `pixelation_percentage` (0–100) — needs an F32 intermediate scratch buffer (n × nStride × sizeof(float)) |
 | Effects | `cutout_dropout` | ✅ | `max_boxes` — erases N boxes/image with solid colour (black) |
 | Effects | `grid_dropout` | ✅ | `boxes`, `hole_w`, `hole_h` — erases a regular grid of holes |
 | Effects | `random_erase` | ✅ | no params — one box/image filled from a tiled noise buffer |

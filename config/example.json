@@ -40,6 +40,7 @@
     { "name": "gridmask", "params": { "tile_width": 40, "grid_ratio": 0.6 } },
     { "name": "spatter", "params": { "r": 65, "g": 42, "b": 20 } },
     { "name": "rain", "batch_sizes": [1, 8], "params": { "rain_percentage": 0.03, "rain_height": 15, "alpha": 0.5 } },
+    { "name": "pixelate", "params": { "pixelation_percentage": 87.5 } },
     { "name": "glitch", "params": { "r_x": 8, "r_y": 8, "b_x": -8, "b_y": -8 } },
     { "name": "erase" },
     { "name": "cutout_dropout", "params": { "max_boxes": 2 } },
