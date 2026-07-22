@@ -1,13 +1,9 @@
 # ============================================================================
-# rpp-bench - config-driven micro-benchmarks for imaging-library operators.
+# rpp-bench - config-driven micro-benchmarks for RPP operators.
 #
 # Standalone project: it consumes an *installed* RPP via find_package(rpp) and
 # fetches Google Benchmark + nlohmann/json at configure time (neither needs to
 # be installed on the system).
-#
-# Structure: a dependency-free core (common/) plus one optional module per
-# library (libraries/<name>/), each built as an OBJECT library and linked into
-# the executable when its dependency is found. Today the only module is RPP.
 #
 # Usage:
 #   cmake -S . -B build                                   # uses $ROCM_PATH or /opt/rocm
@@ -33,8 +29,25 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # ----------------------------------------------------------------------------
-# Third-party dependencies, fetched at configure time. These back the neutral
-# core (they are not tied to any imaging library).
+# Find the installed RPP.
+# ROCm location precedence: -DROCM_PATH  >  $ENV{ROCM_PATH}  >  /opt/rocm.
+# RPP installs its package config to <prefix>/lib/cmake/rpp.
+# ----------------------------------------------------------------------------
+if(NOT DEFINED ROCM_PATH)
+    if(DEFINED ENV{ROCM_PATH})
+        set(ROCM_PATH $ENV{ROCM_PATH})
+    else()
+        set(ROCM_PATH /opt/rocm)
+    endif()
+endif()
+set(ROCM_PATH "${ROCM_PATH}" CACHE PATH "ROCm installation path")
+list(APPEND CMAKE_PREFIX_PATH "${ROCM_PATH}" "${ROCM_PATH}/lib/cmake")
+
+find_package(rpp REQUIRED)
+message(STATUS "rpp-bench: found RPP (${rpp_BACKEND_TYPE} backend) at ${rpp_INCLUDE_DIR}")
+
+# ----------------------------------------------------------------------------
+# Third-party dependencies, fetched at configure time.
 # ----------------------------------------------------------------------------
 include(FetchContent)
 
@@ -54,89 +67,51 @@ FetchContent_Declare(nlohmann_json
 FetchContent_MakeAvailable(benchmark nlohmann_json)
 
 # ----------------------------------------------------------------------------
-# Neutral core: config parsing, the Library/BenchCase interfaces + registry,
-# matrix expansion, name encoding, CLI, and the --progress reporters. Depends on
-# nobody's imaging-library headers - builds with a plain C++17 host compiler.
+# Benchmark executable.
+#
+# The harness lives in common/, grouped by role into subdirectories:
+#   common/config/   - config parsing + string<->enum mapping
+#   common/harness/  - tensor setup, op registry, name encoding, the runner
+#   common/cli/      - argument handling and usage text
+#   common/cli/progress/ - the --progress live reporters (simple + dashboard)
+# Each op adapter is one .cpp under src/ops/. The glob keeps op registration
+# decentralized - re-run cmake after adding a file. We supply our own main()
+# (src/bench_main.cpp), so we link the plain benchmark lib, not benchmark_main.
 # Headers are included path-qualified from the common/ root (e.g.
-# "core/bench_runner.hpp", "cli/bench_cli.hpp").
+# "harness/bench_registry.hpp"), so common/ is the only include directory.
 # ----------------------------------------------------------------------------
-file(GLOB BENCH_CORE_SOURCES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/common/core/*.cpp"
+file(GLOB RPP_BENCH_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/common/cli/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/common/cli/progress/*.cpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/common/cli/progress/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/common/config/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/common/harness/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ops/*.cpp")
 
-add_library(bench_core STATIC ${BENCH_CORE_SOURCES})
-target_include_directories(bench_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/common")
-target_link_libraries(bench_core PUBLIC
+add_executable(rpp_bench ${RPP_BENCH_SOURCES})
+
+target_include_directories(rpp_bench PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/common")
+
+target_link_libraries(rpp_bench PRIVATE
+    rpp::rpp
     benchmark::benchmark
     nlohmann_json::nlohmann_json)
 
 # ----------------------------------------------------------------------------
-# Library modules. Each is optional and self-contained: an OBJECT library that
-# links bench_core plus its own dependency, and self-registers with the core at
-# static-init time. We use OBJECT libraries so the static registrations are never
-# stripped from the final link (a plain static archive would drop them). New
-# modules follow the same shape under libraries/<name>/.
+# HIP backend: RPP's public headers pull in HIP, and setup code calls host-side
+# HIP APIs (hipMalloc/hipMemcpy). rpp-config already runs find_dependency(HIP),
+# so hip::host is available; rocRAND fills input tensors directly in device
+# memory, avoiding a host fill + H2D copy per case.
 # ----------------------------------------------------------------------------
-set(RPP_BENCH_MODULE_OBJECTS "")   # $<TARGET_OBJECTS:...> for each enabled module
-set(RPP_BENCH_MODULE_LIBS "")      # imaging-library link deps for the executable
-
-# ---- RPP module ----
-# ROCm location precedence: -DROCM_PATH  >  $ENV{ROCM_PATH}  >  /opt/rocm.
-if(NOT DEFINED ROCM_PATH)
-    if(DEFINED ENV{ROCM_PATH})
-        set(ROCM_PATH $ENV{ROCM_PATH})
-    else()
-        set(ROCM_PATH /opt/rocm)
-    endif()
-endif()
-set(ROCM_PATH "${ROCM_PATH}" CACHE PATH "ROCm installation path")
-list(APPEND CMAKE_PREFIX_PATH "${ROCM_PATH}" "${ROCM_PATH}/lib/cmake")
-
-find_package(rpp CONFIG)
-if(rpp_FOUND)
-    message(STATUS "rpp-bench: found RPP (${rpp_BACKEND_TYPE} backend) at ${rpp_INCLUDE_DIR}")
-
-    file(GLOB RPP_MODULE_SOURCES CONFIGURE_DEPENDS
-        "${CMAKE_CURRENT_SOURCE_DIR}/libraries/rpp/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/libraries/rpp/ops/*.cpp")
-
-    add_library(rpp_module OBJECT ${RPP_MODULE_SOURCES})
-    target_include_directories(rpp_module PRIVATE
-        "${CMAKE_CURRENT_SOURCE_DIR}/common"
-        "${CMAKE_CURRENT_SOURCE_DIR}/libraries")
-    target_link_libraries(rpp_module PRIVATE bench_core rpp::rpp)
-
-    # HIP backend: RPP's public headers pull in HIP, and setup code calls
-    # host-side HIP APIs (hipMalloc/hipStream). rpp-config already runs
-    # find_dependency(HIP), so hip::host is available; rocRAND fills input tensors
-    # directly in device memory, avoiding a host fill + H2D copy per case.
-    if(rpp_BACKEND_TYPE STREQUAL "HIP")
-        find_package(hip REQUIRED)
-        find_package(rocrand REQUIRED)
-        target_link_libraries(rpp_module PRIVATE hip::host roc::rocrand)
-        # GPU_SUPPORT gates RPP's GPU-capable, backend-dispatch API overloads in
-        # the installed headers (e.g. rppt_erode / rppt_dilate). It must match how
-        # the HIP RPP was built for those declarations to be visible. RPP_BENCH_HIP
-        # is scoped to this module - the core never sees it.
-        target_compile_definitions(rpp_module PRIVATE RPP_BENCH_HIP=1 GPU_SUPPORT=1)
-        list(APPEND RPP_BENCH_MODULE_LIBS rpp::rpp hip::host roc::rocrand)
-    else()
-        target_compile_definitions(rpp_module PRIVATE RPP_BENCH_HIP=0)
-        list(APPEND RPP_BENCH_MODULE_LIBS rpp::rpp)
-    endif()
-
-    list(APPEND RPP_BENCH_MODULE_OBJECTS $<TARGET_OBJECTS:rpp_module>)
+if(rpp_BACKEND_TYPE STREQUAL "HIP")
+    find_package(hip REQUIRED)
+    find_package(rocrand REQUIRED)
+    target_link_libraries(rpp_bench PRIVATE hip::host roc::rocrand)
+    # GPU_SUPPORT gates RPP's GPU-capable, backend-dispatch API overloads in the
+    # installed headers (e.g. rppt_erode / rppt_dilate). It must match how the
+    # HIP RPP was built for those declarations to be visible.
+    target_compile_definitions(rpp_bench PRIVATE RPP_BENCH_HIP=1 GPU_SUPPORT=1)
 else()
-    message(WARNING "rpp-bench: RPP not found - building the core without the RPP module. "
-                    "The binary will register no libraries. Set -DROCM_PATH or -Drpp_DIR.")
+    target_compile_definitions(rpp_bench PRIVATE RPP_BENCH_HIP=0)
 endif()
-
-# ----------------------------------------------------------------------------
-# Executable. Links the neutral core plus every enabled module's objects (as
-# object files, so their static self-registrations survive the link) and the
-# corresponding imaging-library deps. We supply our own main (src/bench_main.cpp),
-# so we link the plain benchmark lib, not benchmark_main.
-# ----------------------------------------------------------------------------
-add_executable(rpp_bench src/bench_main.cpp ${RPP_BENCH_MODULE_OBJECTS})
-target_link_libraries(rpp_bench PRIVATE bench_core ${RPP_BENCH_MODULE_LIBS})

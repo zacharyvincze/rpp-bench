@@ -1,12 +1,9 @@
 /**
  * @file bench_main.cpp
- * @brief Entry point for the benchmark harness.
+ * @brief Entry point for the RPP benchmark harness.
  *
  * We provide our own main (rather than benchmark_main) so the run config can be
- * loaded and benchmarks registered before RunSpecifiedBenchmarks(). This file is
- * library-neutral: it wires config -> runner -> reporters and lists whatever
- * libraries registered themselves. The RPP specifics live behind the Library
- * interface in libraries/rpp/.
+ * loaded and benchmarks registered before RunSpecifiedBenchmarks().
  *
  * Usage:
  *   ./rpp_bench --config=../config/example.json [google-benchmark flags...]
@@ -21,12 +18,12 @@
 #include <benchmark/benchmark.h>
 
 #include "cli/bench_cli.hpp"
+#include "config/bench_config.hpp"
+#include "harness/bench_registry.hpp"
+#include "harness/bench_runner.hpp"
 #include "cli/progress/bench_progress.hpp"
 #include "cli/progress/bench_progress_dashboard.hpp"
 #include "cli/progress/bench_progress_simple.hpp"
-#include "core/bench_config.hpp"
-#include "core/bench_library.hpp"
-#include "core/bench_runner.hpp"
 
 #include <cstdio>
 #include <memory>
@@ -42,15 +39,9 @@ int main(int argc, char **argv) {
     }
 
     if (has_flag(argc, argv, "--list-ops")) {
-        const auto &libs = LibraryRegistry::instance().all();
-        if (libs.empty()) {
-            std::printf("No libraries registered (none were compiled into this build).\n");
-            return 0;
-        }
-        std::printf("Registered libraries and ops:\n");
-        for (const Library *lib : libs)
-            for (const auto &op : lib->opNames())
-                std::printf("  %s/%s\n", lib->name().c_str(), op.c_str());
+        std::printf("Registered benchmark adapters:\n");
+        for (const auto &n : OpRegistry::instance().names())
+            std::printf("  %s\n", n.c_str());
         return 0;
     }
 
