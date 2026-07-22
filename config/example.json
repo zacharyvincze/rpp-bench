@@ -1,7 +1,7 @@
 {
-  "iterations": 1,
+  "iterations": 25,
   "repetitions": 1,
-  "warmup_iterations": 1,
+  "warmup_iterations": 10,
 
   "defaults": {
     "backends": ["HIP"],
