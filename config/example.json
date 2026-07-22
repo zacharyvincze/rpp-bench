@@ -78,6 +78,7 @@
     { "name": "tensor_xor_tensor" },
 
     { "name": "tensor_sum" },
+    { "name": "threshold", "params": { "min": 50.0, "max": 200.0 } },
 
     { "name": "flip", "params": { "horizontal": 1, "vertical": 0 } },
     { "name": "rotate", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },

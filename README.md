@@ -228,7 +228,7 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 | Effects | `grid_dropout` | ☐ | |
 | Effects | `random_erase` | ☐ | |
 | Effects | `coarse_dropout` | ☐ | |
-| Effects | `gaussian_noise_voxel` | ☐ | generic 3D descriptor |
+| Effects | `gaussian_noise_voxel` | ✅ | `mean`, `stddev`, `seed` — 3D voxel (generic 5D descriptor); F32 only |
 | Filter | `gaussian_blur` | ✅ | `kernel_size`, `std_dev` — maps to `rppt_gaussian_filter` |
 | Filter | `box_filter` | ✅ | `kernel_size` |
 | Filter | `median_filter` | ✅ | `kernel_size` |
@@ -247,12 +247,12 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 | Geometric | `resize_crop_mirror` | ✅ | `interpolation`, `mirror` (+ `dst_sizes`) |
 | Geometric | `remap` | ☐ | remap tables |
 | Geometric | `lens_correction` | ☐ | remap tables + matrices |
-| Geometric | `transpose` | ☐ | generic 3D descriptor |
-| Geometric | `slice` | ☐ | generic 3D descriptor |
-| Geometric | `concat` | ☐ | generic 3D descriptor |
+| Geometric | `transpose` | ✅ | `perm` — permute spatial axes (generic ND descriptor) |
+| Geometric | `slice` | ✅ | `fraction` — sub-tensor extract (generic ND descriptor); U8/F32 |
+| Geometric | `concat` | ✅ | `axis` — two-source concat (generic ND descriptor) |
 | Geometric | `phase` | ✅ | no params — two-source |
 | Geometric | `crop_and_patch` | ✅ | no params — two-source; fixed centred half-size crop/patch window |
-| Geometric | `flip_voxel` | ☐ | generic 3D descriptor |
+| Geometric | `flip_voxel` | ✅ | `horizontal`, `vertical`, `depth_flip`, `depth` — 3D voxel (generic 5D descriptor); U8/F32 |
 | Geometric | `jpeg_compression_distortion` | ☐ | |
 | Geometric | `fisheye` | ☐ | |
 | Data exchange | `copy` | ✅ | no params; memory-bandwidth baseline |
@@ -261,31 +261,31 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 | Data exchange | `yuv_to_rgb` | ☐ | separate Y/UV planes |
 | Data exchange | `yuv_to_rgb_cubic_v` | ☐ | separate Y/UV planes |
 | Data exchange | `yuv_to_rgb_linear_v` | ☐ | separate Y/UV planes |
-| Arithmetic | `add_scalar` | ☐ | |
-| Arithmetic | `subtract_scalar` | ☐ | |
-| Arithmetic | `multiply_scalar` | ☐ | |
-| Arithmetic | `fused_multiply_add_scalar` | ☐ | |
+| Arithmetic | `add_scalar` | ✅ | `add`, `depth` — 3D voxel (generic 5D descriptor); F32 only |
+| Arithmetic | `subtract_scalar` | ✅ | `subtract`, `depth` — 3D voxel (generic 5D descriptor); F32 only |
+| Arithmetic | `multiply_scalar` | ✅ | `multiply`, `depth` — 3D voxel (generic 5D descriptor); F32 only |
+| Arithmetic | `fused_multiply_add_scalar` | ✅ | `multiply`, `add`, `depth` — 3D voxel (generic 5D descriptor); F32 only |
 | Arithmetic | `magnitude` | ✅ | no params — two-source |
-| Arithmetic | `log` | ☐ | |
+| Arithmetic | `log` | ✅ | no params — generic ND descriptor; F32 only |
 | Arithmetic | `log1p` | ☐ | |
-| Arithmetic | `tensor_add_tensor` | ☐ | two-source, broadcast modes |
-| Arithmetic | `tensor_subtract_tensor` | ☐ | two-source, broadcast modes |
-| Arithmetic | `tensor_multiply_tensor` | ☐ | two-source, broadcast modes |
-| Arithmetic | `tensor_divide_tensor` | ☐ | two-source, broadcast modes |
-| Statistical | `tensor_sum` | ☐ | |
+| Arithmetic | `tensor_add_tensor` | ✅ | two-source (generic ND descriptor); F32 only |
+| Arithmetic | `tensor_subtract_tensor` | ✅ | two-source (generic ND descriptor); F32 only |
+| Arithmetic | `tensor_multiply_tensor` | ✅ | two-source (generic ND descriptor); F32 only |
+| Arithmetic | `tensor_divide_tensor` | ✅ | two-source (generic ND descriptor); F32 only |
+| Statistical | `tensor_sum` | ✅ | |
 | Statistical | `tensor_min` | ☐ | |
 | Statistical | `tensor_max` | ☐ | |
 | Statistical | `tensor_mean` | ☐ | |
 | Statistical | `tensor_stddev` | ☐ | |
-| Statistical | `normalize` | ☐ | |
-| Statistical | `threshold` | ☐ | |
+| Statistical | `normalize` | ✅ | `axisMask`, `scale`, `shift` — generic ND descriptor; mean/stddev computed internally; F32 only |
+| Statistical | `threshold` | ✅ | `min`, `max` — per-channel cutoffs (always float, size batch×channels); binary mask output |
 | Bitwise | `bitwise_not` | ✅ | no params — U8 only |
 | Bitwise | `bitwise_and` | ✅ | two-source, no params — U8 only |
 | Bitwise | `bitwise_or` | ✅ | two-source, no params — U8 only |
 | Bitwise | `bitwise_xor` | ✅ | two-source, no params — U8 only |
-| Bitwise | `tensor_and_tensor` | ☐ | two-source |
-| Bitwise | `tensor_or_tensor` | ☐ | two-source |
-| Bitwise | `tensor_xor_tensor` | ☐ | two-source |
+| Bitwise | `tensor_and_tensor` | ✅ | two-source (generic ND descriptor) — U8 only |
+| Bitwise | `tensor_or_tensor` | ✅ | two-source (generic ND descriptor) — U8 only |
+| Bitwise | `tensor_xor_tensor` | ✅ | two-source (generic ND descriptor) — U8 only |
 | Audio | `non_silent_region_detection` | ☐ | |
 | Audio | `to_decibels` | ☐ | |
 | Audio | `pre_emphasis_filter` | ☐ | |

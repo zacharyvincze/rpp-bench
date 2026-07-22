@@ -64,7 +64,12 @@
     { "name": "transpose", "params": { "perm": "1,0,2" } },
     { "name": "concat", "params": { "axis": 0 } },
     { "name": "tensor_and_tensor" },
+    { "name": "tensor_add_tensor", "dtypes": ["F32"] },
+    { "name": "tensor_subtract_tensor", "dtypes": ["F32"] },
+    { "name": "tensor_multiply_tensor", "dtypes": ["F32"] },
+    { "name": "tensor_divide_tensor", "dtypes": ["F32"] },
     { "name": "tensor_sum" },
+    { "name": "threshold", "params": { "min": 50.0, "max": 200.0 } },
     { "name": "log", "dtypes": ["F32"] },
     { "name": "add_scalar", "dtypes": ["F32"], "params": { "depth": 4 } }
   ]
