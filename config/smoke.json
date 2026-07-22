@@ -64,6 +64,7 @@
     { "name": "transpose", "params": { "perm": "1,0,2" } },
     { "name": "concat", "params": { "axis": 0 } },
     { "name": "tensor_and_tensor" },
+    { "name": "tensor_sum" },
     { "name": "log", "dtypes": ["F32"] },
     { "name": "add_scalar", "dtypes": ["F32"], "params": { "depth": 4 } }
   ]

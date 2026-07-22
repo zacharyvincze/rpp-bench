@@ -77,6 +77,8 @@
     { "name": "tensor_or_tensor" },
     { "name": "tensor_xor_tensor" },
 
+    { "name": "tensor_sum" },
+
     { "name": "flip", "params": { "horizontal": 1, "vertical": 0 } },
     { "name": "rotate", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
     { "name": "warp_affine", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
