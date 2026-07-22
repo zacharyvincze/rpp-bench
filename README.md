@@ -2,34 +2,11 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Config-driven micro-benchmarks for [RPP](https://github.com/ROCm/rpp) (ROCm Performance Primitives) operators, built on [Google Benchmark].
+Config-driven micro-benchmarks for [RPP](https://github.com/ROCm/rpp) (ROCm Performance Primitives) operators, built on [Google Benchmark]. The benchmark matrix (ops × backends × dtypes × layouts × batch × sizes × params) lives in a runtime JSON file, so exploring new cases means editing a config, not recompiling.
 
-## Index
+Needs an installed RPP discoverable via `find_package(rpp)` (typically from ROCm under `/opt/rocm`), CMake ≥ 3.20, and a C++17 host compiler. The active backend (HOST vs HIP) is inherited from the installed RPP. Google Benchmark and nlohmann/json are fetched automatically at configure time.
 
-- [Requirements](#requirements)
-- [Quick Start](#quick-start)
-- [Build](#build)
-- [Run](#run)
-- [Filtering benchmarks](#filtering-benchmarks)
-- [Analysing results](#analysing-results)
-- [Config format](#config-format)
-- [Project layout](#project-layout)
-- [Operators](#operators)
-- [Adding an op](#adding-an-op)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Requirements
-
-- **An installed RPP** discoverable via `find_package(rpp)` — typically from a ROCm install under `/opt/rocm`, or a local RPP build. The active backend (HOST vs HIP) is inherited from it.
-- **CMake ≥ 3.20** and any C++17 host compiler.
-- **Python 3** for the result-analysis scripts in [scripts/](scripts/). `json2csv.py` uses only the standard library; `plot_results.py` needs `matplotlib` and `numpy`.
-
-Google Benchmark and nlohmann/json are fetched automatically at configure time — no system install of either is required.
-
-## Quick Start
-
-The following snippet clones, builds the benchmarks, and runs a quick smoke test to confirm the HIP and HOST RPP backends are working as intended.
+## Quick start
 
 ```shell
 git clone https://github.com/zacharyvincze/rpp-bench.git
@@ -42,151 +19,38 @@ cmake --build build -j
 ## Build
 
 ```shell
-cmake -S . -B build
+cmake -S . -B build            # uses -DROCM_PATH / $ROCM_PATH / /opt/rocm, in that order
 cmake --build build -j
 ```
+
+Point at a specific RPP with `-DROCM_PATH=/opt/rocm-x.y.z` or `-Drpp_DIR=/path/to/lib/cmake/rpp`.
 
 ## Run
 
 ```shell
-# Run a sweep described by a config file.
-./build/rpp_bench --config=config/example.json
+./build/rpp_bench --config=config/example.json      # run a sweep (results printed to the terminal)
+./build/rpp_bench --list-ops                         # list compiled-in op adapters
+./build/rpp_bench --help                             # all options
 
-# List the op adapters compiled in.
-./build/rpp_bench --list-ops
-
-# Compact live progress instead of a result block per benchmark (great for big
-# sweeps). Combine with --benchmark_out to still capture the full results.
-./build/rpp_bench --config=config/example.json --progress \
-                  --benchmark_out=results.json --benchmark_out_format=json
-
-# Standard Google Benchmark flags are forwarded, e.g. filter / JSON output.
-./build/rpp_bench --config=config/smoke.json \
-                  --benchmark_filter='op:resize.*backend:HIP' \
-                  --benchmark_out=results.json --benchmark_out_format=json
-
-# List the help menu for more options or as a quick reference.
-./build/rpp_bench --help
+# Save results to a file for analysis (see Graphing results).
+./build/rpp_bench --config=config/example.json --benchmark_out=results.json --benchmark_out_format=json
 ```
 
-Configs ship in [config/](config/):
+Configs ship in [config/](config/): `smoke.json` (fast sanity check), `example.json` (fuller sweep), and `sweep_host.json` / `sweep_hip.json` (backend-specific sweeps). Use `--benchmark_filter=<regex>` (standard Google Benchmark substring match; leading `-` inverts) to select cases, and `--progress` for a compact live progress line.
 
-- `smoke.json` — small and fast, for a sanity check.
-- `example.json` — a fuller sweep across a compact matrix.
-- `sweep_host.json` / `sweep_hip.json` — backend-specific sweeps over dimensions common in inference preprocessing pipelines: model-input sizes (224×224 for ImageNet classifiers, 640×640 for YOLO detection, plus 224/256/384 resize targets) and camera/video frame resolutions (720p, 1080p, and — on HIP — 4K UHD). The HIP sweep runs heavier (batches 1/8/32, up to 4K); the HOST sweep is lighter (batches 1/8, up to 1080p) since CPU sweeps at 4K are impractical. Each lists only the ops implemented for its backend (the HOST sweep drops GPU-only `erode`/`dilate`; `histogram_equalize` is HOST-only and auto-skips on HIP).
+## Graphing results
 
-Each benchmark reports `real_time`, `cpu_time`, plus the rate counters `images_per_sec`, `pixels_per_sec`, and `bytes_per_second`.
-
-## Filtering benchmarks
-
-Use Google Benchmark's `--benchmark_filter=<regex>` to select which cases run. The regex is matched (as a substring search) against the full benchmark name, so you can target any encoded field:
-
-```
-op:resize/backend:HIP/dtype:F32/layout:PKD3/batch:8/size:1920x1080/dst:960x540/params:interpolation=BICUBIC
-```
-
-```shell
-# Preview what a filter matches without running anything.
-./build/rpp_bench --config=config/example.json --benchmark_list_tests \
-                  --benchmark_filter='op:resize'
-
-# One op / one backend / one dtype.
-./build/rpp_bench --config=config/example.json --benchmark_filter='op:gaussian_blur'
-./build/rpp_bench --config=config/example.json --benchmark_filter='backend:HIP'
-./build/rpp_bench --config=config/example.json --benchmark_filter='dtype:F32'
-
-# Combine fields with .* (name fields are in a fixed order: op, backend, dtype,
-# layout, batch, size, dst, params).
-./build/rpp_bench --config=config/example.json --benchmark_filter='op:resize.*dtype:F32.*BICUBIC'
-
-# Alternation: two ops.
-./build/rpp_bench --config=config/example.json --benchmark_filter='op:(brightness|resize)'
-
-# A specific size or param variant (trailing '/' avoids partial matches like batch:64 vs 640).
-./build/rpp_bench --config=config/example.json --benchmark_filter='size:1920x1080'
-./build/rpp_bench --config=config/example.json --benchmark_filter='batch:64/'
-./build/rpp_bench --config=config/example.json --benchmark_filter='interpolation=NEAREST_NEIGHBOR'
-```
-
-**Excluding** benchmarks: prefix the regex with `-` to run everything that does *not* match.
-
-```shell
-./build/rpp_bench --config=config/example.json --benchmark_filter='-backend:HOST'   # skip HOST
-./build/rpp_bench --config=config/example.json --benchmark_filter='-op:gaussian_blur'  # skip one op
-```
-
-Filtering happens at run time, so it also trims the JSON/CSV output to just the selected cases — a quick way to produce a focused results file. `--progress` accounts for the active filter, so its denominator reflects the number of cases actually selected (not all registered ones).
-
-## Analysing results
-
-Run with `--benchmark_out=results.json --benchmark_out_format=json` to capture machine-readable results, then post-process them with the scripts in [scripts/](scripts/).
-
-**CSV** — Google Benchmark's built-in CSV reporter is deprecated, so emit native JSON and convert:
+Capture machine-readable results with `--benchmark_out`, then post-process with the scripts in [scripts/](scripts/) (Python 3; `plot.py` needs `matplotlib` + `numpy`).
 
 ```shell
 ./build/rpp_bench --config=config/example.json \
                   --benchmark_out=results.json --benchmark_out_format=json
-python3 scripts/json2csv.py results.json -o results.csv
+
+python3 scripts/plot.py results.json -o plots      # -o is a directory (default: <input_dir>/per_op)
+python3 scripts/json2csv.py results.json -o results.csv   # CSV (stdlib only; default: stdout)
 ```
 
-The benchmark name encodes the combo (`op:<name>/backend:<HOST|HIP>/dtype:<...>/layout:<...>/batch:<n>/size:<WxH>[/dst:<WxH>]`); `json2csv.py` splits it back into columns and joins the numeric counters, one row per measurement (aggregate mean/median/stddev rows are dropped).
-
-**Plot** — `plot_results.py` renders a faceted small-multiples figure (rows = batch size, columns = source size, bars = dtype × layout) on a shared log y-axis, so scaling across every axis is comparable at a glance:
-
-```shell
-python3 scripts/plot_results.py results.json -o results.png
-python3 scripts/plot_results.py results.json               # writes <input>.png
-```
-
-## Config format
-
-```jsonc
-{
-  "min_time_sec": 0.2,        // optional: min wall time per benchmark
-  "repetitions": 3,           // optional: repeats -> mean/median/stddev
-  "warmup_iterations": 5,     // optional: untimed iterations run once per case first
-  "defaults": {               // base matrix; every op inherits these
-    "backends":    ["HOST", "HIP"],
-    "dtypes":      ["U8", "F32"],        // U8 | F32 | F16 | I8
-    "layouts":     ["PKD3", "PLN3"],     // PKD3 (NHWC c3) | PLN3 (NCHW c3) | PLN1 (NCHW c1)
-    "batch_sizes": [1, 8, 64],
-    "image_sizes": [[224, 224], [1920, 1080]]
-  },
-  "ops": [
-    { "name": "brightness", "params": { "alpha": 1.75, "beta": 50 } },
-    { "name": "gaussian_blur", "params": { "kernel_size": 5, "std_dev": 1.5 } },
-    { "name": "flip", "params": { "horizontal": 1, "vertical": 0 } },  // h+v mirror underflows the HIP kernel; see bench_flip.cpp
-    { "name": "resize",                       // per-op axis overrides win over defaults
-      "dtypes": ["U8", "F32"],
-      "dst_sizes": [[112, 112], [960, 540]],  // resize target sizes (source from matrix)
-      "param_sets": [                         // swept: one case per entry
-        { "interpolation": "BILINEAR" },
-        { "interpolation": "NEAREST_NEIGHBOR" },
-        { "interpolation": "BICUBIC" }
-      ] }
-  ]
-}
-```
-
-Any matrix axis set inside an op overrides the default for that op.
-
-### Params: `params` vs `param_sets`
-
-- **`params`** — a single op-specific set applied to every combo.
-- **`param_sets`** — a *list* of sets, swept as an extra axis (one benchmark per entry × the rest of the matrix). Use it to compare, e.g., interpolation types or kernel sizes. `params` and `param_sets` are mutually exclusive.
-
-The active param set is encoded in the benchmark name as `.../params:k1=v1,k2=v2`, so swept cases stay uniquely named and the values flow through to the JSON output and to the CSV's `params` column (comma-quoted). Reading a param in an adapter: `ctx.param<T>("key", fallback)`.
-
-## Adding an op
-
-Each RPP op has a distinct C signature, so each needs a small adapter under `src/ops/bench_<name>.cpp`:
-
-1. For a one-source/one-destination op, subclass `SimpleOpAdapter` (see [common/harness/bench_registry.hpp](common/harness/bench_registry.hpp)); its `setup()`/`run()` take a single `src`/`dst`. For a multi-source or multi-destination op, subclass `OpAdapter` directly, override `numSrc()`/`numDst()`, and take `std::vector<TensorBuffer>&` for `src`/`dst` (see [src/ops/bench_bitwise_and.cpp](src/ops/bench_bitwise_and.cpp) for the two-source pattern — all sources share one descriptor/ROI).
-2. In `setup()` allocate any op-specific param tensors (use `bench_pinned_alloc` so they work on HIP); in `run()` call the `rppt_*` function; free in `teardown()`.
-3. Optionally override `supportedDtypes()` / `supportedLayouts()` / `supportedBackends()` to constrain the sweep (e.g. RGB-only or HIP-only ops), and, for filter-style ops, `srcOffsetBytes()` / `srcAdditionalStride()` to request the halo padding HIP kernels need.
-4. Register with `REGISTER_RPP_BENCH("config_name", AdapterClass)`.
-
-The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
+`plot.py` writes one horizontal bar chart per operator into the output directory (one bar per fully-resolved config, sorted by runtime and coloured by dtype). Add `--per-image` to normalize runtime by batch, or `--linear` for a linear x-axis.
 
 ## Operators
 
@@ -298,7 +162,7 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 
 ## Contributing
 
-Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for build, style, and PR guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for build, style, and PR guidelines, including how to add an op.
 
 ## License
 
