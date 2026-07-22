@@ -245,8 +245,8 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 | Geometric | `crop_mirror_normalize` | ✅ | `offset`, `multiplier`, `mirror` (+ `dst_sizes`) |
 | Geometric | `resize_mirror_normalize` | ✅ | `interpolation`, `mean`, `std_dev`, `mirror` (+ `dst_sizes`) |
 | Geometric | `resize_crop_mirror` | ✅ | `interpolation`, `mirror` (+ `dst_sizes`) |
-| Geometric | `remap` | ☐ | remap tables |
-| Geometric | `lens_correction` | ☐ | remap tables + matrices |
+| Geometric | `remap` | ✅ | `interpolation` — per-pixel row/col remap tables (identity map); NEAREST_NEIGHBOR/BILINEAR |
+| Geometric | `lens_correction` | ✅ | no params — barrel-distortion correction; camera matrix + distortion coeffs seeded internally |
 | Geometric | `transpose` | ✅ | `perm` — permute spatial axes (generic ND descriptor) |
 | Geometric | `slice` | ✅ | `fraction` — sub-tensor extract (generic ND descriptor); U8/F32 |
 | Geometric | `concat` | ✅ | `axis` — two-source concat (generic ND descriptor) |
