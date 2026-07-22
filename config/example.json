@@ -1,7 +1,7 @@
 {
-  "iterations": 25,
+  "iterations": 1,
   "repetitions": 1,
-  "warmup_iterations": 10,
+  "warmup_iterations": 1,
 
   "defaults": {
     "backends": ["HIP"],
@@ -85,6 +85,10 @@
     { "name": "tensor_xor_tensor" },
 
     { "name": "tensor_sum" },
+    { "name": "tensor_min" },
+    { "name": "tensor_max" },
+    { "name": "tensor_mean" },
+    { "name": "tensor_stddev" },
     { "name": "threshold", "params": { "min": 50.0, "max": 200.0 } },
 
     { "name": "flip", "params": { "horizontal": 1, "vertical": 0 } },

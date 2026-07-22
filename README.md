@@ -273,10 +273,10 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 | Arithmetic | `tensor_multiply_tensor` | ✅ | two-source (generic ND descriptor); F32 only |
 | Arithmetic | `tensor_divide_tensor` | ✅ | two-source (generic ND descriptor); F32 only |
 | Statistical | `tensor_sum` | ✅ | |
-| Statistical | `tensor_min` | ☐ | |
-| Statistical | `tensor_max` | ☐ | |
-| Statistical | `tensor_mean` | ☐ | |
-| Statistical | `tensor_stddev` | ☐ | |
+| Statistical | `tensor_min` | ✅ | Reduction — channel-wise + overall min; no dst image |
+| Statistical | `tensor_max` | ✅ | Reduction — channel-wise + overall max; no dst image |
+| Statistical | `tensor_mean` | ✅ | Reduction — channel-wise + total mean (F32 output); no dst image |
+| Statistical | `tensor_stddev` | ✅ | Reduction — channel-wise + total stddev (F32 output); takes a `meanTensor` input; no dst image |
 | Statistical | `normalize` | ✅ | `axisMask`, `scale`, `shift` — generic ND descriptor; mean/stddev computed internally; F32 only |
 | Statistical | `threshold` | ✅ | `min`, `max` — per-channel cutoffs (always float, size batch×channels); binary mask output |
 | Bitwise | `bitwise_not` | ✅ | no params — U8 only |

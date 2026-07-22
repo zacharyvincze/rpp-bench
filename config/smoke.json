@@ -78,6 +78,10 @@
     { "name": "tensor_multiply_tensor", "dtypes": ["F32"] },
     { "name": "tensor_divide_tensor", "dtypes": ["F32"] },
     { "name": "tensor_sum" },
+    { "name": "tensor_min" },
+    { "name": "tensor_max" },
+    { "name": "tensor_mean" },
+    { "name": "tensor_stddev" },
     { "name": "threshold", "params": { "min": 50.0, "max": 200.0 } },
     { "name": "log", "dtypes": ["F32"] },
     { "name": "add_scalar", "dtypes": ["F32"], "params": { "depth": 4 } }
