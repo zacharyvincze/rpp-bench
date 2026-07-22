@@ -42,6 +42,12 @@
     { "name": "rain", "batch_sizes": [1, 8], "params": { "rain_percentage": 0.03, "rain_height": 15, "alpha": 0.5 } },
     { "name": "glitch", "params": { "r_x": 8, "r_y": 8, "b_x": -8, "b_y": -8 } },
     { "name": "erase" },
+    { "name": "cutout_dropout", "params": { "max_boxes": 2 } },
+    { "name": "coarse_dropout", "params": { "max_boxes": 2 } },
+    { "name": "grid_dropout", "params": { "boxes": 4, "hole_w": 20, "hole_h": 20 } },
+    { "name": "random_erase" },
+    { "name": "ricap", "batch_sizes": [8, 64] },
+    { "name": "water", "params": { "amplitude_x": 2.0, "amplitude_y": 5.0, "frequency_x": 5.8, "frequency_y": 1.2, "phase_x": 10.0, "phase_y": 15.0 } },
 
     { "name": "gaussian_blur", "params": { "kernel_size": 5, "std_dev": 1.5 } },
     { "name": "box_filter", "params": { "kernel_size": 5 } },

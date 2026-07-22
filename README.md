@@ -221,13 +221,13 @@ The CMake glob picks up new files under `src/ops/`; re-run `cmake --build`. See 
 | Effects | `erase` | ✅ | one centred box/image, RGB colour — 3-channel only |
 | Effects | `glitch` | ✅ | `r_x`/`r_y`/`g_x`/`g_y`/`b_x`/`b_y` channel offsets — 3-channel only |
 | Effects | `non_linear_blend` | ✅ | `std_dev` — two-source (Gaussian-mask blend) |
-| Effects | `water` | ☐ | |
-| Effects | `ricap` | ☐ | |
+| Effects | `water` | ✅ | `amplitude_x/y`, `frequency_x/y`, `phase_x/y` — six per-image float tensors |
+| Effects | `ricap` | ✅ | no params — patches output from 4 crop regions of permuted batch images; requires batch > 1 (config overrides `batch_sizes`) |
 | Effects | `pixelate` | ☐ | external scratch buffer |
-| Effects | `cutout_dropout` | ☐ | |
-| Effects | `grid_dropout` | ☐ | |
-| Effects | `random_erase` | ☐ | |
-| Effects | `coarse_dropout` | ☐ | |
+| Effects | `cutout_dropout` | ✅ | `max_boxes` — erases N boxes/image with solid colour (black) |
+| Effects | `grid_dropout` | ✅ | `boxes`, `hole_w`, `hole_h` — erases a regular grid of holes |
+| Effects | `random_erase` | ✅ | no params — one box/image filled from a tiled noise buffer |
+| Effects | `coarse_dropout` | ✅ | `max_boxes` — erases N non-overlapping boxes/image (filled internally) |
 | Effects | `gaussian_noise_voxel` | ✅ | `mean`, `stddev`, `seed` — 3D voxel (generic 5D descriptor); F32 only |
 | Filter | `gaussian_blur` | ✅ | `kernel_size`, `std_dev` — maps to `rppt_gaussian_filter` |
 | Filter | `box_filter` | ✅ | `kernel_size` |
