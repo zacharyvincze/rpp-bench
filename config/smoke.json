@@ -63,6 +63,8 @@
     { "name": "rotate", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
     { "name": "warp_affine", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
     { "name": "warp_perspective", "params": { "angle": 30.0, "interpolation": "BILINEAR" } },
+    { "name": "remap", "params": { "interpolation": "BILINEAR" } },
+    { "name": "lens_correction" },
     { "name": "crop", "dst_sizes": [[112, 112]] },
     { "name": "crop_mirror_normalize", "dst_sizes": [[112, 112]], "params": { "multiplier": 1.0, "mirror": 1 } },
     { "name": "resize_crop_mirror", "dst_sizes": [[112, 112]], "params": { "interpolation": "BILINEAR", "mirror": 1 } },
