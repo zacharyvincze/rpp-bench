@@ -4,8 +4,15 @@
  */
 #include "cli/bench_cli.hpp"
 
+#include <unistd.h>
+
+#include <cctype>
 #include <cstdio>
 #include <cstring>
+#include <ctime>
+#include <filesystem>
+#include <string>
+#include <system_error>
 #include <vector>
 
 namespace rppbench {
@@ -82,6 +89,74 @@ std::string extract_progress(int &argc, char **argv) {
     return mode;
 }
 
+std::string flag_value(int argc, char **argv, const char *name) {
+    const std::string prefix = std::string(name) + "=";
+    std::string value;
+    for (int i = 1; i < argc; ++i)
+        if (std::strncmp(argv[i], prefix.c_str(), prefix.size()) == 0)
+            value = argv[i] + prefix.size();
+    return value;
+}
+
+namespace {
+
+/**
+ * @brief Replace characters that are awkward in file names with '-'.
+ * @param s Raw name component (config stem, host name).
+ * @return The sanitized component.
+ */
+std::string sanitize(std::string s) {
+    for (char &c : s)
+        if (!(std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '.'))
+            c = '-';
+    return s;
+}
+
+} // namespace
+
+std::string inject_default_output(int &argc, char **&argv, const std::string &configPath) {
+    if (has_flag_named(argc, argv, "--benchmark_out") ||
+        has_flag_named(argc, argv, "--benchmark_list_tests"))
+        return {};
+
+    // Extension follows the requested file format; Google Benchmark's default is json.
+    const std::string format = flag_value(argc, argv, "--benchmark_out_format");
+    const std::string ext = format.empty() ? "json" : (format == "console" ? "txt" : format);
+
+    char stamp[32] = {};
+    const std::time_t now = std::time(nullptr);
+    std::strftime(stamp, sizeof(stamp), "%Y%m%d-%H%M%S", std::localtime(&now));
+    char host[256] = {};
+    if (gethostname(host, sizeof(host) - 1) != 0)
+        std::strcpy(host, "unknown-host");
+
+    const std::string stem = std::filesystem::path(configPath).stem().string();
+    const std::string path = std::string(kDefaultResultsDir) + "/" + sanitize(stem) + "_" + stamp +
+                             "_" + sanitize(host) + "." + ext;
+    std::error_code ec;
+    std::filesystem::create_directories(kDefaultResultsDir, ec);
+    if (ec) {
+        std::fprintf(stderr, "warning: can't create '%s' (%s); not writing a result file.\n",
+                     kDefaultResultsDir, ec.message().c_str());
+        return {};
+    }
+
+    // argv can't grow in place, so copy it into storage that lives for the rest
+    // of the program (Google Benchmark keeps pointers into it), append, re-point.
+    static std::vector<std::string> extra;
+    static std::vector<char *> args;
+    extra.push_back("--benchmark_out=" + path);
+    if (format.empty())
+        extra.emplace_back("--benchmark_out_format=json");
+    args.assign(argv, argv + argc);
+    for (auto &e : extra)
+        args.push_back(e.data());
+    argc = static_cast<int>(args.size());
+    args.push_back(nullptr); // keep the argv[argc] == nullptr convention
+    argv = args.data();
+    return path;
+}
+
 /**
  * @brief Print detailed usage.
  *
@@ -115,6 +190,7 @@ void print_help(const char *prog) {
                 "                         tally; falls back to 'simple' off a TTY). Honors the\n"
                 "                         active --benchmark_filter; combine with\n"
                 "                         --benchmark_out to still capture full results.\n"
+                "  --no-results-file      Don't write the default result file (see RESULTS).\n"
                 "  --help, -h             Show this help, then exit.\n"
                 "\n"
                 "The config sets defaults for per-benchmark timing: \"min_time_sec\" (wall\n"
@@ -142,6 +218,15 @@ void print_help(const char *prog) {
                 "  --v=<level>                           Google Benchmark verbosity.\n"
                 "  (--help on a stock benchmark binary lists the complete set.)\n"
                 "\n"
+                "RESULTS:\n"
+                "  Every run writes a JSON result file unless --benchmark_out is given:\n"
+                "    results/<config-stem>_<YYYYmmdd-HHMMSS>_<host>.json\n"
+                "  (--no-results-file to skip). Its \"context\" block records the run's\n"
+                "  provenance: rpp-bench commit, RPP version and loaded library, ROCm/HIP\n"
+                "  versions, GPU and clock policy, CPU, command line, relevant env vars,\n"
+                "  and the config's path and hash. JSON result files also embed the config\n"
+                "  itself under a top-level \"rpp_bench_config\" key.\n"
+                "\n"
                 "BENCHMARK NAME / FILTERING:\n"
                 "  Names encode the combo in a fixed field order, e.g.\n"
                 "    op:resize/backend:HIP/dtype:F32/layout:PKD3/batch:8/size:1920x1080/\\\n"
@@ -159,7 +244,7 @@ void print_help(const char *prog) {
                 "  %s --config=config/example.json --benchmark_list_tests\n"
                 "\n"
                 "Post-process results with the scripts in scripts/ (json2csv.py,\n"
-                "plot_results.py). See README.md for details.\n",
+                "plot.py). See README.md for details.\n",
                 prog, prog, prog, prog, prog, prog, prog, prog);
 }
 

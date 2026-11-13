@@ -96,7 +96,28 @@ target_include_directories(rpp_bench PRIVATE
 target_link_libraries(rpp_bench PRIVATE
     rpp::rpp
     benchmark::benchmark
-    nlohmann_json::nlohmann_json)
+    nlohmann_json::nlohmann_json
+    ${CMAKE_DL_LIBS})                                       # dladdr: locate the loaded librpp
+
+# ----------------------------------------------------------------------------
+# Build info (rpp-bench git commit, ROCm version) embedded in every result
+# file's context. Regenerated on every build (not just at configure time) so
+# the recorded commit never goes stale; the header is only rewritten when it
+# changes, so this costs nothing on an unchanged tree.
+# ----------------------------------------------------------------------------
+set(RPP_BENCH_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+add_custom_target(rpp_bench_build_info
+    COMMAND "${CMAKE_COMMAND}"
+            -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+            -DOUT_FILE=${RPP_BENCH_GENERATED_DIR}/bench_build_info.hpp
+            -DROCM_PATH=${ROCM_PATH}
+            -DRPP_BACKEND=${rpp_BACKEND_TYPE}
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bench_build_info.cmake"
+    BYPRODUCTS "${RPP_BENCH_GENERATED_DIR}/bench_build_info.hpp"
+    COMMENT "rpp-bench: refreshing build info"
+    VERBATIM)
+add_dependencies(rpp_bench rpp_bench_build_info)
+target_include_directories(rpp_bench PRIVATE "${RPP_BENCH_GENERATED_DIR}")
 
 # ----------------------------------------------------------------------------
 # HIP backend: RPP's public headers pull in HIP, and setup code calls host-side

@@ -31,9 +31,10 @@ There is no test suite. Validate changes by running `config/smoke.json` and chec
 ### Analysing results
 
 ```shell
-./build/rpp_bench --config=config/example.json --benchmark_out=results.json --benchmark_out_format=json
-python3 scripts/json2csv.py results.json -o results.csv     # stdlib only
-python3 scripts/plot.py results.json -o results.png         # needs matplotlib + numpy
+./build/rpp_bench --config=config/example.json --benchmark_out=results.json   # default: results/<cfg>_<time>_<host>.json
+uv sync                                                     # once: .venv from pyproject.toml/uv.lock
+uv run scripts/json2csv.py results.json -o results.csv      # stdlib only
+uv run scripts/plot.py results.json -o plots                # needs matplotlib + numpy (-o is a directory)
 ```
 
 ## Architecture
@@ -54,7 +55,9 @@ The harness lives in `common/`, grouped by role into subdirectories, with one op
 - **`bench_runner.*`** — the cartesian expansion (`register_benchmarks()`: nested loops over backend/dtype/layout/batch/size/dst/paramSet), filtering each combo by the adapter's `supportedDtypes/Layouts/Backends` and the compiled-in backends. Owns `run_case()` (the timed body) and the `CaseResources` reuse (see below); the HIP stream sync lives here, behind `run_case()`.
 - **`bench_name.*`** — `encode_name()`, the benchmark-name encoding (its own file because it's a contract with `scripts/json2csv.py`).
 
-**`common/cli/`** — `bench_cli.*` (argument munging for `--config`, `--list-ops`, `--progress[=simple|fancy]`, plus `--help`) and **`cli/progress/`**, the `--progress` live reporters: `bench_progress.*` (the shared `ProgressReporter` base + `count_matching()`), `bench_progress_simple.*` (default one-line), and `bench_progress_dashboard.*` (`--progress=fancy` TTY dashboard, falling back to the plain line off a TTY).
+- **`bench_metadata.*`** — run provenance for result files: `add_run_metadata()` records rpp-bench commit, RPP version + loaded `librpp` path, ROCm/HIP versions, GPU identity and clock policy, CPU, command line, env vars, and config path/hash as Google Benchmark custom context; `embed_config_in_results()` appends the config itself to the finished JSON. Build-time facts come from the generated `bench_build_info.hpp` (`cmake/bench_build_info.cmake`, refreshed every build).
+
+**`common/cli/`** — `bench_cli.*` (argument munging for `--config`, `--list-ops`, `--progress[=simple|fancy]`, `--no-results-file`, plus `--help`; `inject_default_output()` adds a default `--benchmark_out` under `results/` when none is given) and **`cli/progress/`**, the `--progress` live reporters: `bench_progress.*` (the shared `ProgressReporter` base + `count_matching()`), `bench_progress_simple.*` (default one-line), and `bench_progress_dashboard.*` (`--progress=fancy` TTY dashboard, falling back to the plain line off a TTY).
 
 **`src/`** — `bench_main.cpp` (the entry point) and `ops/bench_<name>.cpp` (one adapter per op).
 
@@ -62,7 +65,7 @@ The harness lives in `common/`, grouped by role into subdirectories, with one op
 
 - **Case-resource reuse.** Google Benchmark re-invokes a case's function multiple times (calibration ramp + each repetition). The runner (`bench_runner.cpp`) holds one live `CaseResources` (`g_case`) — the `rppCreate` handle, HIP stream, src/dst `TensorBuffer`s, and the adapter — built **once** per `caseId` and reused across those re-invocations; a new case releases the previous one. So at most one case's GPU memory is resident; this assumes single-threaded, sequential benchmarks. That's why `release_active_resources()` must be called after `RunSpecifiedBenchmarks()` — it frees the final case's allocations explicitly rather than relying on static destruction order.
 - **The generic `roiTensor` packing is a contract with RPP.** For `GENERIC_ND` tensors the flat `roiTensor` is `batch * nSpatial * 2` `Rpp32u`s (`nSpatial` = descriptor `numDims` minus the batch dim), laid out **per sample as two blocks**: `[begin_0..begin_{s-1}, length_0..length_{s-1}]` — not interleaved. The generic descriptor's `dims[0]` is the batch and `dims[1..]` are the spatial extents, with packed (contiguous) strides. `TensorBuffer::initGeneric`/`resetRoi` build this to match RPP's own `fill_roi_values`/`compute_strides`; getting the block order, the `nSpatial` (vs `numDims`) count, or the stride packing wrong makes the kernel read out of bounds.
-- **The benchmark name is a contract.** `encode_name()` in `common/harness/bench_name.cpp` produces `op:.../backend:.../dtype:.../layout:.../batch:.../size:WxH[/dst:WxH][/params:k=v,...]`, and `scripts/json2csv.py` splits it back into columns (`NAME_KEYS`). Keep the two in sync — changing the format silently breaks CSV conversion. Params are sorted and comma-joined for deterministic, uniquely-named swept cases.
+- **The benchmark name is a contract.** `encode_name()` in `common/harness/bench_name.cpp` produces `op:.../backend:.../dtype:.../layout:.../batch:.../size:WxH[/dst:WxH][/params:k=v,...]`, and `scripts/json2csv.py` splits it back into columns (`NAME_KEYS`). Keep the two in sync — changing the format silently breaks CSV conversion. Bump `kResultSchemaVersion` (`harness/bench_metadata.hpp`, recorded as `rpp_bench_schema`) on any incompatible change to the name format or metadata keys, so stored result files stay distinguishable. Params are sorted and comma-joined for deterministic, uniquely-named swept cases.
 
 ## Adding an op
 

@@ -10,15 +10,21 @@
  *   ./rpp_bench --list-ops
  *   ./rpp_bench --config=cfg.json --benchmark_out=results.json --benchmark_out_format=json
  *   ./rpp_bench --config=cfg.json --progress    # compact live progress line
+ *   ./rpp_bench --config=cfg.json --no-results-file   # skip the default result file
  *   ./rpp_bench --help                          # detailed usage
  *
  * Argument handling lives in bench_cli, the --progress display in bench_progress,
- * and the matrix expansion in bench_runner; this file just wires them together.
+ * the matrix expansion in bench_runner, and the result-file provenance in
+ * bench_metadata; this file just wires them together.
+ *
+ * Without --benchmark_out, a run still writes its JSON to results/ (see
+ * inject_default_output) - an unrecorded run can't be compared or archived.
  */
 #include <benchmark/benchmark.h>
 
 #include "cli/bench_cli.hpp"
 #include "config/bench_config.hpp"
+#include "harness/bench_metadata.hpp"
 #include "harness/bench_registry.hpp"
 #include "harness/bench_runner.hpp"
 #include "cli/progress/bench_progress.hpp"
@@ -26,12 +32,17 @@
 #include "cli/progress/bench_progress_simple.hpp"
 
 #include <cstdio>
+#include <filesystem>
 #include <memory>
 #include <string>
+#include <system_error>
 #include <vector>
 
 int main(int argc, char **argv) {
     using namespace rppbench;
+
+    // Recorded in the result file before the harness strips its own flags.
+    const std::vector<std::string> commandLine(argv, argv + argc);
 
     if (has_flag(argc, argv, "--help") || has_flag(argc, argv, "-h")) {
         print_help(argv[0]);
@@ -52,6 +63,7 @@ int main(int argc, char **argv) {
         return 2;
     }
 
+    const bool noResultsFile = strip_flag(argc, argv, "--no-results-file");
     const std::string configPath = extract_config(argc, argv);
     if (configPath.empty()) {
         std::fprintf(stderr, "error: no config given. Use --config=<path.json> "
@@ -91,9 +103,21 @@ int main(int argc, char **argv) {
     if (n == 0)
         return 1;
 
+    const std::string resultsPath =
+        noResultsFile ? std::string{} : inject_default_output(argc, argv, configPath);
+    // Where JSON results land (default or user-given), read before Initialize()
+    // consumes the flags; the config is embedded there after the run.
+    const std::string outFormat = flag_value(argc, argv, "--benchmark_out_format");
+    const std::string jsonOutPath = (outFormat.empty() || outFormat == "json")
+                                        ? flag_value(argc, argv, "--benchmark_out")
+                                        : std::string{};
+
     benchmark::Initialize(&argc, argv);
     if (benchmark::ReportUnrecognizedArguments(argc, argv))
         return 1;
+    add_run_metadata(configPath, commandLine);
+    if (!resultsPath.empty())
+        std::fprintf(stderr, "rpp_bench: writing results to %s\n", resultsPath.c_str());
     if (!progressMode.empty()) {
         // Count only the cases the active filter will actually run, so the
         // progress denominator is correct under --benchmark_filter.
@@ -109,6 +133,17 @@ int main(int argc, char **argv) {
         benchmark::RunSpecifiedBenchmarks();
     }
     release_active_resources(); // free the last case's handle/buffers
-    benchmark::Shutdown();
+    benchmark::Shutdown();      // closes the result file
+
+    // A filter that matched nothing leaves an empty default file; don't litter.
+    std::error_code ec;
+    if (!resultsPath.empty() && std::filesystem::file_size(resultsPath, ec) == 0 && !ec) {
+        std::filesystem::remove(resultsPath, ec);
+        return 0;
+    }
+    if (!jsonOutPath.empty() && !embed_config_in_results(jsonOutPath, configPath))
+        std::fprintf(stderr, "warning: couldn't embed the config in %s\n", jsonOutPath.c_str());
+    if (!resultsPath.empty())
+        std::fprintf(stderr, "rpp_bench: results written to %s\n", resultsPath.c_str());
     return 0;
 }
