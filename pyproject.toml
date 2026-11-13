@@ -1,0 +1,15 @@
+# Python environment for the result post-processing scripts in scripts/.
+# Not a package - just pins the plotting dependencies so `uv sync` / `uv run`
+# give everyone the same environment. The C++ build does not use this.
+[project]
+name = "rpp-bench-scripts"
+version = "0.1.0"
+description = "Post-processing scripts (CSV conversion, plotting) for rpp-bench results"
+requires-python = ">=3.10"
+dependencies = [
+    "matplotlib>=3.8",
+    "numpy>=1.26",
+]
+
+[tool.uv]
+package = false

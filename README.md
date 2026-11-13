@@ -28,26 +28,48 @@ Point at a specific RPP with `-DROCM_PATH=/opt/rocm-x.y.z` or `-Drpp_DIR=/path/t
 ## Run
 
 ```shell
-./build/rpp_bench --config=config/example.json      # run a sweep (results printed to the terminal)
+./build/rpp_bench --config=config/example.json      # run a sweep (also saved under results/)
 ./build/rpp_bench --list-ops                         # list compiled-in op adapters
 ./build/rpp_bench --help                             # all options
 
-# Save results to a file for analysis (see Graphing results).
-./build/rpp_bench --config=config/example.json --benchmark_out=results.json --benchmark_out_format=json
+# Choose the result file yourself instead of the default name.
+./build/rpp_bench --config=config/example.json --benchmark_out=my_run.json
 ```
 
 Configs ship in [config/](config/): `smoke.json` (fast sanity check), `example.json` (fuller sweep), and `sweep_host.json` / `sweep_hip.json` (backend-specific sweeps). Use `--benchmark_filter=<regex>` (standard Google Benchmark substring match; leading `-` inverts) to select cases, and `--progress` for a compact live progress line.
 
+## Results and run metadata
+
+Every run writes its results as JSON to `results/<config-stem>_<YYYYmmdd-HHMMSS>_<host>.json` (git-ignored), unless you pass `--benchmark_out=<file>` (with `--benchmark_out_format` choosing json/csv) or `--no-results-file`. A run that executes no cases (a filter that matches nothing, `--benchmark_list_tests`) writes nothing.
+
+Each JSON file describes the run that produced it, so results stay comparable across machines and builds. Next to Google Benchmark's own fields (host, CPU count and caches, load, date), the `context` block records:
+
+| Key | What |
+|---|---|
+| `rpp_bench_schema` | Version of these keys and of the benchmark-name format |
+| `rpp_bench_commit` | rpp-bench commit it was built from (`-dirty` if there were uncommitted changes) |
+| `rpp_version`, `rpp_backend` | RPP version from the headers it was compiled against, and HOST/HIP |
+| `rpp_library` | The `librpp` the loader actually picked up (matters when several are installed) |
+| `rocm_path`, `rocm_version` | ROCm install it was built against |
+| `hip_runtime_version`, `hip_driver_version` | HIP versions at run time (HIP builds) |
+| `gpu_*` | Device name, gfx arch, CU count, max clocks, VRAM, PCI bus ID, and `gpu_perf_level` (the amdgpu clock policy; `auto` means clocks float, so timings are noisier) |
+| `cpu_model`, `os_kernel` | CPU model and kernel release |
+| `command_line` | The exact invocation |
+| `config_path`, `config_hash` | Sweep config and a hash of its content (whitespace-insensitive) |
+| `env_*` | `OMP_NUM_THREADS`, `HIP_VISIBLE_DEVICES`, `ROCR_VISIBLE_DEVICES`, `LD_LIBRARY_PATH`, when set |
+
+The config itself is stored under the top-level `rpp_bench_config` key, so you can reproduce a run after the config file has changed.
+
 ## Graphing results
 
-Capture machine-readable results with `--benchmark_out`, then post-process with the scripts in [scripts/](scripts/) (Python 3; `plot.py` needs `matplotlib` + `numpy`).
+Post-process result files with the scripts in [scripts/](scripts/) (Python 3; `plot.py` needs `matplotlib` + `numpy`). The dependencies are pinned in [pyproject.toml](pyproject.toml)/`uv.lock`; with [uv](https://docs.astral.sh/uv/), `uv sync` creates `.venv/` and `uv run` uses it automatically.
 
 ```shell
-./build/rpp_bench --config=config/example.json \
-                  --benchmark_out=results.json --benchmark_out_format=json
+./build/rpp_bench --config=config/example.json --benchmark_out=results.json
 
-python3 scripts/plot.py results.json -o plots      # -o is a directory (default: <input_dir>/per_op)
-python3 scripts/json2csv.py results.json -o results.csv   # CSV (stdlib only; default: stdout)
+uv sync                                              # once: create .venv with matplotlib + numpy
+uv run scripts/plot.py results.json -o plots         # -o is a directory (default: <input_dir>/per_op)
+uv run scripts/json2csv.py results.json -o results.csv   # CSV (stdlib only; default: stdout)
 ```
 
 `plot.py` writes one horizontal bar chart per operator into the output directory (one bar per fully-resolved config, sorted by runtime and coloured by dtype). Add `--per-image` to normalize runtime by batch, or `--linear` for a linear x-axis.
