@@ -36,7 +36,7 @@ Point at a specific RPP with `-DROCM_PATH=/opt/rocm-x.y.z` or `-Drpp_DIR=/path/t
 ./build/rpp_bench --config=config/example.json --benchmark_out=my_run.json
 ```
 
-Configs ship in [config/](config/): `smoke.json` (fast sanity check), `example.json` (fuller sweep), and `sweep_host.json` / `sweep_hip.json` (backend-specific sweeps). Use `--benchmark_filter=<regex>` (standard Google Benchmark substring match; leading `-` inverts) to select cases, and `--progress` for a compact live progress line.
+Configs ship in [config/](config/); see [config/README.md](config/README.md) for what each one covers and when to use it. Use `--benchmark_filter=<regex>` (standard Google Benchmark substring match; leading `-` inverts) to select cases, and `--progress` for a compact live progress line.
 
 ## Results and run metadata
 

@@ -1,6 +1,4 @@
 {
-  "description": "Full reference sweep: every registered op on both backends, meant to be run about monthly as a performance baseline. It combines sweep_host.json (HOST section, first) and sweep_hip.json (HIP section, second) unchanged apart from shared timing, so case names match those sweeps. Backend sections run back to back so the GPU stays loaded through the HIP cases. Omitted because RPP returns NOT_IMPLEMENTED: color_jitter on HIP, and HIP resize with BICUBIC at batch 1. Keep this file stable so monthly results stay comparable.",
-
   "iterations": 25,
   "repetitions": 3,
   "warmup_iterations": 10,
